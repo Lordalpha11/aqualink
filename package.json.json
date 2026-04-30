@@ -1,0 +1,12 @@
+{
+  "name": "aqualink",
+  "version": "1.0.0",
+  "description": "Global Water Distribution Platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
