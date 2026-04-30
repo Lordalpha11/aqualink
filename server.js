@@ -801,8 +801,28 @@ async function loadBookings() {
   if(!r.bookings||r.bookings.length===0){tbody.innerHTML='';empty.style.display='block';document.getElementById('bk-msg').innerHTML='No bookings yet.';return;}
   empty.style.display='none';
   tbody.innerHTML=r.bookings.map(function(b){
-    var sc2=ME&&ME.role==='admin'?'<select class="ssel" onchange="updStatus(\''+b.id+'\',this.value)"><option value="pending"'+(b.status==='pending'?' selected':'')+'>Pending</option><option value="active"'+(b.status==='active'?' selected':'')+'>Active</option><option value="transit"'+(b.status==='transit'?' selected':'')+'>In Transit</option><option value="complete"'+(b.status==='complete'?' selected':'')+'>Complete</option></select>':'<span class="badge '+sc(b.status)+'">'+b.status+'</span>';
-    return '<tr><td class="bid">'+b.id+'</td><td>'+b.destination+'</td><td style="color:var(--muted)">'+b.waterType+'</td><td style="font-weight:600">'+fv(b.volumeLitres)+'</td><td><span class="badge '+pc(b.priority)+'">'+b.priority+'</span></td><td>'+sc2+'</td><td style="color:var(--muted);font-size:.8rem">'+b.createdAt.slice(0,10)+'</td><td><button class="btn btn-d" style="padding:5px 11px;font-size:.75rem" onclick="cancelB(\''+b.id+'\')">Cancel</button></td></tr>';
+    var statusCell = '';
+    if(ME && ME.role==='admin'){
+      statusCell += '<select class="ssel" onchange="updStatus(this.dataset.id,this.value)" data-id="'+b.id+'">';
+      statusCell += '<option value="pending"'+(b.status==='pending'?' selected':'')+'>Pending</option>';
+      statusCell += '<option value="active"'+(b.status==='active'?' selected':'')+'>Active</option>';
+      statusCell += '<option value="transit"'+(b.status==='transit'?' selected':'')+'>In Transit</option>';
+      statusCell += '<option value="complete"'+(b.status==='complete'?' selected':'')+'>Complete</option>';
+      statusCell += '</select>';
+    } else {
+      statusCell = '<span class="badge '+sc(b.status)+'">'+b.status+'</span>';
+    }
+    var cancelBtn = '<button class="btn btn-d" style="padding:5px 11px;font-size:.75rem" data-bid="'+b.id+'" onclick="cancelB(this.dataset.bid)">Cancel</button>';
+    return '<tr>'
+      +'<td class="bid">'+b.id+'</td>'
+      +'<td>'+b.destination+'</td>'
+      +'<td style="color:var(--muted)">'+b.waterType+'</td>'
+      +'<td style="font-weight:600">'+fv(b.volumeLitres)+'</td>'
+      +'<td><span class="badge '+pc(b.priority)+'">'+b.priority+'</span></td>'
+      +'<td>'+statusCell+'</td>'
+      +'<td style="color:var(--muted);font-size:.8rem">'+b.createdAt.slice(0,10)+'</td>'
+      +'<td>'+cancelBtn+'</td>'
+      +'</tr>';
   }).join('');
 }
 async function updStatus(id,status){var r=await api('PUT','/bookings/'+id+'/status',{status:status});if(r.error){toast('❌',r.error);return;}toast('✅','Booking '+id+' → '+status);}
