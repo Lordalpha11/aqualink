@@ -76,6 +76,167 @@ function seedData() {
   saveDB(db);
 }
 
+
+// ─── EMAIL NOTIFICATIONS ──────────────────────────────
+var GMAIL_USER = 'aqualink79@gmail.com';
+var GMAIL_PASS = 'wztoitjhkiixcjiv';
+var ADMIN_EMAIL = 'aqualink79@gmail.com';
+
+function sendEmail(to, subject, htmlBody) {
+  return new Promise(function(resolve) {
+    try {
+      var net = require('net');
+      var tls = require('tls');
+      
+      // Build the email
+      var boundary = 'AQL' + Date.now();
+      var msg = [
+        'From: AquaLink <' + GMAIL_USER + '>',
+        'To: ' + to,
+        'Subject: ' + subject,
+        'MIME-Version: 1.0',
+        'Content-Type: text/html; charset=utf-8',
+        '',
+        htmlBody
+      ].join('\r\n');
+
+      var b64 = Buffer.from(msg).toString('base64').replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+      
+      // Use Gmail API via SMTP
+      smtpSend(to, subject, htmlBody, function(err) {
+        if(err) { console.log('Email error:', err.message); }
+        else { console.log('Email sent to:', to); }
+        resolve();
+      });
+    } catch(e) {
+      console.log('Email setup error:', e.message);
+      resolve();
+    }
+  });
+}
+
+function smtpSend(to, subject, body, cb) {
+  var tls = require('tls');
+  var socket = tls.connect(465, 'smtp.gmail.com', { rejectUnauthorized: false }, function() {
+    var step = 0;
+    var cmds = [
+      'EHLO aqualink.app\r\n',
+      'AUTH LOGIN\r\n',
+      Buffer.from(GMAIL_USER).toString('base64') + '\r\n',
+      Buffer.from(GMAIL_PASS).toString('base64') + '\r\n',
+      'MAIL FROM:<' + GMAIL_USER + '>\r\n',
+      'RCPT TO:<' + to + '>\r\n',
+      'DATA\r\n',
+      'From: AquaLink Notifications <' + GMAIL_USER + '>\r\nTo: ' + to + '\r\nSubject: ' + subject + '\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=utf-8\r\n\r\n' + body + '\r\n.\r\n',
+      'QUIT\r\n'
+    ];
+    function next() {
+      if(step < cmds.length) { socket.write(cmds[step++]); }
+    }
+    socket.on('data', function(d) {
+      var res = d.toString();
+      if(res.startsWith('220') || res.startsWith('235') || res.startsWith('250') || res.startsWith('334') || res.startsWith('354')) {
+        next();
+      } else if(res.startsWith('221')) {
+        socket.destroy(); cb(null);
+      } else if(res.startsWith('4') || res.startsWith('5')) {
+        socket.destroy(); cb(new Error(res.trim()));
+      }
+    });
+    next();
+  });
+  socket.on('error', function(e) { cb(e); });
+  setTimeout(function() { try{socket.destroy();}catch(e){} cb(new Error('timeout')); }, 15000);
+}
+
+function emailTemplate(title, content) {
+  return '<!DOCTYPE html><html><head><meta charset=UTF-8><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Outfit,Arial,sans-serif;background:#f0f4f8;padding:20px}.wrap{max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.1)}.header{background:linear-gradient(135deg,#1578c8,#00e5ff);padding:32px;text-align:center}.header h1{font-size:1.8rem;letter-spacing:3px;color:#010b14;margin-top:8px}.logo-mark{width:36px;height:36px;background:#010b14;clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);margin:0 auto 8px}.body{padding:32px}.body h2{font-size:1.2rem;color:#1578c8;margin-bottom:16px}.info-table{width:100%;border-collapse:collapse;margin:16px 0}.info-table td{padding:10px 14px;border-bottom:1px solid #f0f4f8;font-size:.9rem}.info-table td:first-child{color:#4a7a9b;font-weight:600;width:40%}.info-table td:last-child{color:#021525;font-weight:500}.cta{display:inline-block;margin-top:20px;padding:14px 32px;background:linear-gradient(135deg,#1578c8,#00e5ff);color:#010b14;text-decoration:none;border-radius:100px;font-weight:700;font-size:.9rem}.footer{background:#f8fafb;padding:20px;text-align:center;font-size:.78rem;color:#4a7a9b}</style></head><body><div class=wrap><div class=header><div class=logo-mark></div><h1>AQUALINK</h1></div><div class=body>' + content + '</div><div class=footer>AquaLink Global Water Distribution Platform<br>This is an automated notification. Do not reply to this email.</div></div></body></html>';
+}
+
+function notifyNewBooking(booking, userName, userEmail) {
+  var adminHtml = emailTemplate('New Booking Alert', 
+    '<h2>🚨 New Water Booking Received!</h2>' +
+    '<p style="color:#4a7a9b;margin-bottom:16px">A new booking has been submitted on AquaLink.</p>' +
+    '<table class=info-table>' +
+    '<tr><td>Booking ID</td><td><strong style="color:#00e5ff">' + booking.id + '</strong></td></tr>' +
+    '<tr><td>From</td><td>' + userName + ' (' + userEmail + ')</td></tr>' +
+    '<tr><td>Destination</td><td>' + booking.destination + '</td></tr>' +
+    '<tr><td>Water Type</td><td>' + booking.waterType + '</td></tr>' +
+    '<tr><td>Volume</td><td>' + (booking.volumeLitres >= 1000 ? (booking.volumeLitres/1000).toFixed(0)+'K' : booking.volumeLitres) + ' Litres</td></tr>' +
+    '<tr><td>Priority</td><td><strong style="color:' + (booking.priority==='Emergency'?'#ff6b6b':booking.priority==='Urgent'?'#ffd166':'#4a7a9b') + '">' + booking.priority + '</strong></td></tr>' +
+    '<tr><td>Est. Delivery</td><td>' + booking.estimatedDelivery + '</td></tr>' +
+    '</table>' +
+    '<a class=cta href="https://aqualink-1.onrender.com">View Dashboard →</a>'
+  );
+  
+  var customerHtml = emailTemplate('Booking Confirmed',
+    '<h2>✅ Your Booking is Confirmed!</h2>' +
+    '<p style="color:#4a7a9b;margin-bottom:16px">Thank you for using AquaLink. Your water booking has been received and is being processed.</p>' +
+    '<table class=info-table>' +
+    '<tr><td>Booking ID</td><td><strong style="color:#00e5ff">' + booking.id + '</strong></td></tr>' +
+    '<tr><td>Destination</td><td>' + booking.destination + '</td></tr>' +
+    '<tr><td>Water Type</td><td>' + booking.waterType + '</td></tr>' +
+    '<tr><td>Volume</td><td>' + (booking.volumeLitres >= 1000 ? (booking.volumeLitres/1000).toFixed(0)+'K' : booking.volumeLitres) + ' Litres</td></tr>' +
+    '<tr><td>Priority</td><td>' + booking.priority + '</td></tr>' +
+    '<tr><td>Est. Delivery</td><td>' + booking.estimatedDelivery + '</td></tr>' +
+    '<tr><td>Status</td><td>Pending — Our team will contact you within 24 hours</td></tr>' +
+    '</table>' +
+    '<p style="margin-top:16px;font-size:.85rem;color:#4a7a9b">If you have any questions, reply to this email or contact us at aqualink79@gmail.com</p>'
+  );
+
+  sendEmail(ADMIN_EMAIL, '🚨 New Booking ' + booking.id + ' — ' + booking.priority + ' — ' + booking.destination, adminHtml);
+  sendEmail(userEmail, '✅ AquaLink Booking Confirmed — ' + booking.id, customerHtml);
+}
+
+function notifyNewUser(user) {
+  var html = emailTemplate('New User Registered',
+    '<h2>👤 New User Registered!</h2>' +
+    '<p style="color:#4a7a9b;margin-bottom:16px">Someone just joined AquaLink.</p>' +
+    '<table class=info-table>' +
+    '<tr><td>Name</td><td>' + user.name + '</td></tr>' +
+    '<tr><td>Email</td><td>' + user.email + '</td></tr>' +
+    '<tr><td>Type</td><td><strong>' + (user.userType==='supplier'?'🚚 Water Supplier':'💧 Consumer') + '</strong></td></tr>' +
+    '<tr><td>Organization</td><td>' + (user.organization||'—') + '</td></tr>' +
+    '<tr><td>Country</td><td>' + (user.country||'—') + '</td></tr>' +
+    '<tr><td>Role</td><td>' + user.role + '</td></tr>' +
+    '</table>' +
+    '<a class=cta href="https://aqualink-1.onrender.com">View Dashboard →</a>'
+  );
+  sendEmail(ADMIN_EMAIL, '👤 New ' + (user.userType==='supplier'?'Supplier':'User') + ' — ' + user.name + ' from ' + user.country, html);
+}
+
+function notifySupplierWelcome(user) {
+  var html = emailTemplate('Welcome to AquaLink',
+    '<h2>🚚 Welcome to AquaLink Suppliers!</h2>' +
+    '<p style="color:#4a7a9b;margin-bottom:16px">Thank you for applying as a water supplier on AquaLink, ' + user.name + '!</p>' +
+    '<p style="margin-bottom:16px;color:#021525">Your application has been received. Here is what happens next:</p>' +
+    '<table class=info-table>' +
+    '<tr><td>Step 1</td><td>Our team reviews your application (within 24 hours)</td></tr>' +
+    '<tr><td>Step 2</td><td>We verify your water supply capacity and coverage</td></tr>' +
+    '<tr><td>Step 3</td><td>You receive a Verified Supplier badge on AquaLink</td></tr>' +
+    '<tr><td>Step 4</td><td>You start receiving booking requests from consumers</td></tr>' +
+    '</table>' +
+    '<p style="margin-top:16px;font-size:.85rem;color:#4a7a9b">Questions? Email us at aqualink79@gmail.com</p>'
+  );
+  sendEmail(user.email, '🚚 Welcome to AquaLink Suppliers — Application Received', html);
+}
+
+function notifyConsumerWelcome(user) {
+  var html = emailTemplate('Welcome to AquaLink',
+    '<h2>💧 Welcome to AquaLink, ' + user.name + '!</h2>' +
+    '<p style="color:#4a7a9b;margin-bottom:16px">You have successfully registered on AquaLink — the global water distribution platform.</p>' +
+    '<table class=info-table>' +
+    '<tr><td>Your Account</td><td>' + user.email + '</td></tr>' +
+    '<tr><td>Organization</td><td>' + (user.organization||'—') + '</td></tr>' +
+    '<tr><td>Country</td><td>' + (user.country||'—') + '</td></tr>' +
+    '</table>' +
+    '<p style="margin:16px 0;color:#021525">You can now:</p>' +
+    '<p style="color:#021525">✅ Book water supply for your community or organization<br>✅ Track your deliveries in real time<br>✅ Contact our team for emergency water requests</p>' +
+    '<a class=cta href="https://aqualink-1.onrender.com">Book Water Now →</a>'
+  );
+  sendEmail(user.email, '💧 Welcome to AquaLink — Your Account is Ready', html);
+}
+
 // ─── HELPERS ──────────────────────────────────────────
 function setCORS(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -943,6 +1104,10 @@ http.createServer(async function(req, res) {
     }
     saveDB(db);
     var msg = data.userType==='supplier' ? 'Welcome! Your supplier application has been received. Our team will verify your account within 24 hours.' : 'Welcome to AquaLink, '+data.name+'! You can now book water.';
+    // Send email notifications
+    notifyNewUser(user);
+    if(data.userType==='supplier') { notifySupplierWelcome(user); }
+    else { notifyConsumerWelcome(user); }
     return sendJSON(res,201,{message:msg, user:safeUser(user), token:makeToken(user)});
   }
 
@@ -984,7 +1149,10 @@ http.createServer(async function(req, res) {
     var days = data.priority==='Emergency'?2:data.priority==='Urgent'?4:14;
     var booking = { id:nextBookingId(), userId:auth.id, destination:data.city?data.city+', '+data.destination:data.destination, waterType:data.waterType, volumeLitres:parseInt(data.volumeLitres), priority:data.priority||'Standard', status:'pending', requestorType:data.requestorType||'Individual', requiredBy:data.requiredBy||'', notes:data.notes||'', createdAt:new Date().toISOString(), estimatedDelivery:new Date(Date.now()+days*86400000).toISOString().slice(0,10) };
     db.bookings.push(booking); saveDB(db);
-    return sendJSON(res,201,{message:'Booking '+booking.id+' confirmed! Our team will contact you within 24 hours to coordinate delivery.', booking:booking});
+    // Send email notifications
+    var booker = db.users.find(function(u){return u.id===auth.id;});
+    if(booker) { notifyNewBooking(booking, booker.name, booker.email); }
+    return sendJSON(res,201,{message:'Booking '+booking.id+' confirmed! A confirmation email has been sent to you. Our team will contact you within 24 hours.', booking:booking});
   }
 
   // PUT /api/bookings/:id/status
