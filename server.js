@@ -77,80 +77,51 @@ function seedData() {
 }
 
 
-// ─── EMAIL SYSTEM ─────────────────────────────────────
-var GMAIL_USER = process.env.GMAIL_USER || 'aqualink79@gmail.com';
-var GMAIL_PASS = process.env.GMAIL_PASS || 'yrmhizhyhvkbwfaw';
+// ─── EMAIL SYSTEM (Resend API) ───────────────────────
+var RESEND_KEY = process.env.RESEND_KEY || 're_EiMBpMft_AuK6VCRGB7RaUUWfxR3JD2KJ';
 var ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'aqualink79@gmail.com';
+var FROM_EMAIL = 'onboarding@resend.dev';
 
 function sendEmail(toEmail, subject, htmlBody) {
-  var tls = require('tls');
   return new Promise(function(resolve) {
     try {
-      var socket = tls.connect({
-        host: 'smtp.gmail.com',
-        port: 465,
-        rejectUnauthorized: false
-      }, function() {
-        var stage = 0;
-        var userB64 = Buffer.from(GMAIL_USER).toString('base64');
-        var passB64 = Buffer.from(GMAIL_PASS).toString('base64');
-        var emailData = [
-          'From: AquaLink <' + GMAIL_USER + '>',
-          'To: ' + toEmail,
-          'Subject: ' + subject,
-          'MIME-Version: 1.0',
-          'Content-Type: text/html; charset=utf-8',
-          '',
-          htmlBody,
-          '.'
-        ].join('\r\n');
-
-        var steps = [
-          { expect: '220', send: 'EHLO aqualink.app\r\n' },
-          { expect: '250', send: 'AUTH LOGIN\r\n' },
-          { expect: '334', send: userB64 + '\r\n' },
-          { expect: '334', send: passB64 + '\r\n' },
-          { expect: '235', send: 'MAIL FROM:<' + GMAIL_USER + '>\r\n' },
-          { expect: '250', send: 'RCPT TO:<' + toEmail + '>\r\n' },
-          { expect: '250', send: 'DATA\r\n' },
-          { expect: '354', send: emailData + '\r\n' },
-          { expect: '250', send: 'QUIT\r\n' },
-          { expect: '221', send: null }
-        ];
-
-        socket.on('data', function(chunk) {
-          var line = chunk.toString();
-          var code = line.substring(0, 3);
-          var expected = steps[stage] ? steps[stage].expect : null;
-          if (code === expected || line.indexOf(expected) === 0) {
-            if (steps[stage].send) {
-              socket.write(steps[stage].send);
-            }
-            stage++;
-            if (stage >= steps.length) {
-              console.log('✅ Email sent to: ' + toEmail);
-              socket.destroy();
-              resolve(true);
-            }
-          } else if (code[0] === '4' || code[0] === '5') {
-            console.log('❌ SMTP error at stage ' + stage + ': ' + line.trim());
-            socket.destroy();
+      var https = require('https');
+      var payload = JSON.stringify({
+        from: 'AquaLink <' + FROM_EMAIL + '>',
+        to: [toEmail],
+        subject: subject,
+        html: htmlBody
+      });
+      var options = {
+        hostname: 'api.resend.com',
+        port: 443,
+        path: '/emails',
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + RESEND_KEY,
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(payload)
+        }
+      };
+      var req = https.request(options, function(res) {
+        var data = '';
+        res.on('data', function(c) { data += c; });
+        res.on('end', function() {
+          if (res.statusCode === 200 || res.statusCode === 201) {
+            console.log('✅ Email sent to: ' + toEmail);
+            resolve(true);
+          } else {
+            console.log('❌ Email failed: ' + res.statusCode + ' ' + data);
             resolve(false);
           }
         });
-
-        socket.on('error', function(err) {
-          console.log('❌ Socket error: ' + err.message);
-          resolve(false);
-        });
       });
-
-      setTimeout(function() {
-        try { socket.destroy(); } catch(e) {}
-        console.log('❌ Email timeout for: ' + toEmail);
+      req.on('error', function(e) {
+        console.log('❌ Email error: ' + e.message);
         resolve(false);
-      }, 20000);
-
+      });
+      req.write(payload);
+      req.end();
     } catch(e) {
       console.log('❌ Email exception: ' + e.message);
       resolve(false);
@@ -158,7 +129,7 @@ function sendEmail(toEmail, subject, htmlBody) {
   });
 }
 
-function emailWrap(title, body) {
+function emailWrap(body) {
   return '<!DOCTYPE html><html><head><meta charset=UTF-8><style>' +
     'body{margin:0;padding:20px;background:#f0f4f8;font-family:Arial,sans-serif}' +
     '.wrap{max-width:580px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1)}' +
@@ -182,12 +153,11 @@ function emailWrap(title, body) {
 }
 
 function fmtVol(l) {
-  return l >= 1000000 ? (l/1000000).toFixed(1)+'M L' : l >= 1000 ? (l/1000).toFixed(0)+'K L' : l+' L';
+  return l>=1000000?(l/1000000).toFixed(1)+'M L':l>=1000?(l/1000).toFixed(0)+'K L':l+' L';
 }
 
 function sendBookingEmails(booking, userName, userEmail) {
-  // Email to admin
-  var adminBody = emailWrap('New Booking Alert',
+  var adminBody = emailWrap(
     '<h2>🚨 New Water Booking!</h2>' +
     '<p>A new booking was just submitted on AquaLink.</p>' +
     '<table>' +
@@ -199,15 +169,13 @@ function sendBookingEmails(booking, userName, userEmail) {
     '<tr><td>Volume</td><td>' + fmtVol(booking.volumeLitres) + '</td></tr>' +
     '<tr><td>Priority</td><td style="color:' + (booking.priority==='Emergency'?'#ff6b6b':booking.priority==='Urgent'?'#ffd166':'#4a7a9b') + ';font-weight:700">' + booking.priority + '</td></tr>' +
     '<tr><td>Est. Delivery</td><td>' + booking.estimatedDelivery + '</td></tr>' +
-    '<tr><td>Notes</td><td>' + (booking.notes||'—') + '</td></tr>' +
+    '<tr><td>Notes</td><td>' + (booking.notes||'None') + '</td></tr>' +
     '</table>' +
     '<a class=cta href="https://aqualink-1.onrender.com">Open Dashboard →</a>'
   );
-
-  // Email to customer
-  var customerBody = emailWrap('Booking Confirmed',
+  var customerBody = emailWrap(
     '<h2>✅ Your Booking is Confirmed!</h2>' +
-    '<p>Thank you for using AquaLink, <strong>' + userName + '</strong>. Your water booking has been received.</p>' +
+    '<p>Thank you for using AquaLink, <strong>' + userName + '</strong>. Your water booking has been received and is being processed.</p>' +
     '<table>' +
     '<tr><td>Booking ID</td><td style="color:#00e5ff;font-weight:700">' + booking.id + '</td></tr>' +
     '<tr><td>Destination</td><td>' + booking.destination + '</td></tr>' +
@@ -217,20 +185,16 @@ function sendBookingEmails(booking, userName, userEmail) {
     '<tr><td>Est. Delivery</td><td>' + booking.estimatedDelivery + '</td></tr>' +
     '<tr><td>Status</td><td>Pending — being processed</td></tr>' +
     '</table>' +
-    '<p>Our team will contact you within 24 hours to coordinate delivery with a supplier in your region.</p>' +
+    '<p>Our team will contact you within 24 hours to coordinate delivery.</p>' +
     '<p>Questions? Email us at <a href="mailto:aqualink79@gmail.com">aqualink79@gmail.com</a></p>' +
     '<a class=cta href="https://aqualink-1.onrender.com">Track Your Booking →</a>'
   );
-
   sendEmail(ADMIN_EMAIL, '🚨 New Booking ' + booking.id + ' — ' + booking.priority + ' — ' + booking.destination, adminBody);
-  if (userEmail !== ADMIN_EMAIL) {
-    sendEmail(userEmail, '✅ AquaLink Booking Confirmed — ' + booking.id, customerBody);
-  }
+  sendEmail(userEmail, '✅ AquaLink Booking Confirmed — ' + booking.id, customerBody);
 }
 
 function sendWelcomeEmail(user) {
-  // Admin notification
-  var adminBody = emailWrap('New Registration',
+  var adminBody = emailWrap(
     '<h2>👤 New ' + (user.userType==='supplier'?'Supplier':'User') + ' Registered!</h2>' +
     '<table>' +
     '<tr><td>Name</td><td>' + user.name + '</td></tr>' +
@@ -243,10 +207,9 @@ function sendWelcomeEmail(user) {
   );
   sendEmail(ADMIN_EMAIL, '👤 New ' + (user.userType==='supplier'?'Supplier':'User') + ' — ' + user.name + ' from ' + (user.country||'?'), adminBody);
 
-  // Welcome to user
   var userBody;
   if (user.userType === 'supplier') {
-    userBody = emailWrap('Supplier Application Received',
+    userBody = emailWrap(
       '<h2>🚚 Welcome to AquaLink Suppliers!</h2>' +
       '<p>Thank you for applying as a water supplier, <strong>' + user.name + '</strong>!</p>' +
       '<p>Your application has been received. Here is what happens next:</p>' +
@@ -259,7 +222,7 @@ function sendWelcomeEmail(user) {
       '<p>Questions? Email us at <a href="mailto:aqualink79@gmail.com">aqualink79@gmail.com</a></p>'
     );
   } else {
-    userBody = emailWrap('Welcome to AquaLink',
+    userBody = emailWrap(
       '<h2>💧 Welcome to AquaLink, ' + user.name + '!</h2>' +
       '<p>Your account is ready. You can now book clean water for your community or organization.</p>' +
       '<table>' +
@@ -271,7 +234,7 @@ function sendWelcomeEmail(user) {
       '<a class=cta href="https://aqualink-1.onrender.com">Book Water Now →</a>'
     );
   }
-  sendEmail(user.email, user.userType==='supplier' ? '🚚 AquaLink Supplier Application Received' : '💧 Welcome to AquaLink — Your Account is Ready', userBody);
+  sendEmail(user.email, user.userType==='supplier'?'🚚 AquaLink Supplier Application Received':'💧 Welcome to AquaLink — Your Account is Ready', userBody);
 }
 
 // ─── HELPERS ──────────────────────────────────────────
@@ -1252,4 +1215,5 @@ http.createServer(async function(req, res) {
   console.log('========================================');
   console.log('');
 });
+
 
