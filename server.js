@@ -79,6 +79,8 @@ function seedData() {
 
 // ─── EMAIL SYSTEM (Resend API) ───────────────────────
 var RESEND_KEY = process.env.RESEND_KEY || 're_EiMBpMft_AuK6VCRGB7RaUUWfxR3JD2KJ';
+var PAYSTACK_PUBLIC = process.env.PAYSTACK_PUBLIC || 'pk_test_f01988149ae68d04ac03ed5f5ed887af26ce3787';
+var PAYSTACK_SECRET = process.env.PAYSTACK_SECRET || 'sk_test_5d4f5870cc2f185648fc85d2563ee0086094f8a7';
 var ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'aqualink79@gmail.com';
 var FROM_EMAIL = 'onboarding@resend.dev';
 
@@ -235,6 +237,37 @@ function sendWelcomeEmail(user) {
     );
   }
   sendEmail(user.email, user.userType==='supplier'?'🚚 AquaLink Supplier Application Received':'💧 Welcome to AquaLink — Your Account is Ready', userBody);
+}
+
+function sendPaymentEmail(booking, userName, userEmail, amount, currency) {
+  var adminBody = emailWrap(
+    '<h2>💳 Payment Received!</h2>' +
+    '<p>A payment has been confirmed on AquaLink.</p>' +
+    '<table>' +
+    '<tr><td>Booking ID</td><td style="color:#00e5ff;font-weight:700">' + booking.id + '</td></tr>' +
+    '<tr><td>Customer</td><td>' + userName + '</td></tr>' +
+    '<tr><td>Email</td><td>' + userEmail + '</td></tr>' +
+    '<tr><td>Amount Paid</td><td style="color:#06d6a0;font-weight:700">' + currency + ' ' + amount.toLocaleString() + '</td></tr>' +
+    '<tr><td>Reference</td><td>' + booking.paymentRef + '</td></tr>' +
+    '<tr><td>Destination</td><td>' + booking.destination + '</td></tr>' +
+    '</table>' +
+    '<a class=cta href="https://aqualink-1.onrender.com">View Dashboard →</a>'
+  );
+  var customerBody = emailWrap(
+    '<h2>💳 Payment Confirmed!</h2>' +
+    '<p>Thank you <strong>' + userName + '</strong>! Your payment has been received and your booking is now active.</p>' +
+    '<table>' +
+    '<tr><td>Booking ID</td><td style="color:#00e5ff;font-weight:700">' + booking.id + '</td></tr>' +
+    '<tr><td>Amount Paid</td><td style="color:#06d6a0;font-weight:700">' + currency + ' ' + amount.toLocaleString() + '</td></tr>' +
+    '<tr><td>Destination</td><td>' + booking.destination + '</td></tr>' +
+    '<tr><td>Water Type</td><td>' + booking.waterType + '</td></tr>' +
+    '<tr><td>Status</td><td>Active — being coordinated</td></tr>' +
+    '</table>' +
+    '<p>Our team will now coordinate your water delivery. You will be contacted within 24 hours.</p>' +
+    '<a class=cta href="https://aqualink-1.onrender.com">Track Your Booking →</a>'
+  );
+  sendEmail(ADMIN_EMAIL, '💳 Payment Received — ' + booking.id + ' — ' + currency + ' ' + amount, adminBody);
+  sendEmail(userEmail, '💳 Payment Confirmed — AquaLink Booking ' + booking.id, customerBody);
 }
 
 // ─── HELPERS ──────────────────────────────────────────
@@ -973,6 +1006,7 @@ async function loadBookings() {
     } else {
       statusCell = '<span class="badge '+sc(b.status)+'">'+b.status+'</span>';
     }
+    var payBtn = !b.paid ? '<button class="btn btn-p" style="padding:5px 11px;font-size:.75rem;margin-right:5px" onclick="payBooking(''+b.id+'','+b.volumeLitres+')">💳 Pay</button>' : '<span style="color:var(--green);font-size:.78rem;font-weight:600">✅ Paid</span>';
     var cancelBtn = '<button class="btn btn-d" style="padding:5px 11px;font-size:.75rem" data-bid="'+b.id+'" onclick="cancelB(this.dataset.bid)">Cancel</button>';
     return '<tr>'
       +'<td class="bid">'+b.id+'</td>'
@@ -982,7 +1016,7 @@ async function loadBookings() {
       +'<td><span class="badge '+pc(b.priority)+'">'+b.priority+'</span></td>'
       +'<td>'+statusCell+'</td>'
       +'<td style="color:var(--muted);font-size:.8rem">'+b.createdAt.slice(0,10)+'</td>'
-      +'<td>'+cancelBtn+'</td>'
+      +'<td>'+payBtn+' '+cancelBtn+'</td>'
       +'</tr>';
   }).join('');
 }
@@ -1005,6 +1039,10 @@ async function submitBook(){
   document.getElementById('book-success').style.display='block';
   document.getElementById('s-id').textContent=r.booking.id;
   document.getElementById('s-msg').textContent=r.message;
+  currentBookingId = r.booking.id;
+  currentBookingVol = r.booking.volumeLitres;
+  var amountNaira = (r.booking.volumeLitres * PRICE_PER_LITRE_KOBO / 100).toLocaleString();
+  document.getElementById('pay-amount').textContent = 'NGN ' + amountNaira;
   toast('✅','Booking '+r.booking.id+' confirmed!');
 }
 function resetBook(){document.getElementById('book-success').style.display='none';document.getElementById('book-form').style.display='block';['b-country','b-city','b-notes'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('vol-slide').value=5000;document.getElementById('vol-disp').textContent='5,000 L';}
@@ -1051,6 +1089,80 @@ function sc(s){return s==='active'?'b-active':s==='pending'?'b-pending':s==='tra
 function toast(ico,msg){document.getElementById('t-i').textContent=ico;document.getElementById('t-m').textContent=msg;var t=document.getElementById('toast');t.classList.add('show');setTimeout(function(){t.classList.remove('show');},4000);}
 
 // ── BOOT ──────────────────────────────────────────────
+// ── PAYMENT ───────────────────────────────────────────
+var currentBookingId = null;
+var currentBookingVol = 0;
+var paystackKey = '';
+
+// Load Paystack script
+(function(){
+  var s = document.createElement('script');
+  s.src = 'https://js.paystack.co/v1/inline.js';
+  document.head.appendChild(s);
+})();
+
+// Price per litre in Kobo (NGN) — 10 kobo per litre = N100 per 1000L
+// Adjust this to your real pricing!
+var PRICE_PER_LITRE_KOBO = 10;
+
+async function getPaystackKey() {
+  if (paystackKey) return paystackKey;
+  var r = await api('GET', '/paystack-key');
+  paystackKey = r.publicKey || '';
+  return paystackKey;
+}
+
+async function payNow() {
+  if (!ME) { toast('❌', 'Please log in first.'); return; }
+  var key = await getPaystackKey();
+  if (!key) { toast('❌', 'Payment system not available.'); return; }
+  var amount = currentBookingVol * PRICE_PER_LITRE_KOBO;
+  if (amount < 100) amount = 100; // minimum 1 Naira
+
+  var handler = PaystackPop.setup({
+    key: key,
+    email: ME.email,
+    amount: amount,
+    currency: 'NGN',
+    ref: 'AQL_' + Date.now(),
+    metadata: { bookingId: currentBookingId, userName: ME.name },
+    callback: async function(response) {
+      toast('⏳', 'Verifying payment...');
+      var r = await api('POST', '/verify-payment', {
+        reference: response.reference,
+        bookingId: currentBookingId
+      });
+      if (r.success) {
+        document.getElementById('pay-section').innerHTML =
+          '<div style="text-align:center;padding:20px">' +
+          '<div style="font-size:3rem;margin-bottom:12px">✅</div>' +
+          '<div style="font-family:Bebas Neue,sans-serif;font-size:1.5rem;color:var(--green);letter-spacing:2px">PAYMENT CONFIRMED!</div>' +
+          '<p style="color:var(--muted);margin-top:8px;font-size:.85rem">NGN ' + r.amount.toLocaleString() + ' received. Your booking is now active!</p>' +
+          '</div>';
+        toast('✅', 'Payment confirmed! Check your email for receipt.');
+      } else {
+        toast('❌', r.error || 'Payment verification failed.');
+      }
+    },
+    onClose: function() {
+      toast('ℹ️', 'Payment cancelled. You can pay later from My Bookings.');
+    }
+  });
+  handler.openIframe();
+}
+
+// Also add Pay button to bookings table
+async function payBooking(bookingId, volumeLitres) {
+  currentBookingId = bookingId;
+  currentBookingVol = volumeLitres;
+  var amount = volumeLitres * PRICE_PER_LITRE_KOBO;
+  if (amount < 100) amount = 100;
+  var amountNaira = (amount / 100).toLocaleString();
+  if (confirm('Pay NGN ' + amountNaira + ' for booking ' + bookingId + '?')) {
+    await payNow();
+  }
+}
+
 loadLandingStats();
 (async function boot(){
   if(TOKEN){var r=await api('GET','/me');if(!r.error){ME=r.user;startApp();return;}localStorage.removeItem('aq_token');TOKEN=null;}
@@ -1202,6 +1314,70 @@ http.createServer(async function(req, res) {
     return sendJSON(res,200,{users:loadDB().users.map(safeUser),total:loadDB().users.length});
   }
 
+  // GET /api/paystack-key
+  if (route === '/paystack-key' && method === 'GET') {
+    return sendJSON(res, 200, { publicKey: PAYSTACK_PUBLIC });
+  }
+
+  // POST /api/verify-payment
+  if (route === '/verify-payment' && method === 'POST') {
+    var auth = checkToken(getToken(req));
+    if (!auth) return sendJSON(res, 401, { error: 'Please log in.' });
+    var data = await getBody(req);
+    var reference = data.reference;
+    var bookingId = data.bookingId;
+    if (!reference) return sendJSON(res, 400, { error: 'Payment reference required.' });
+
+    // Verify with Paystack
+    var https = require('https');
+    var verified = await new Promise(function(resolve) {
+      var options = {
+        hostname: 'api.paystack.co',
+        port: 443,
+        path: '/transaction/verify/' + reference,
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + PAYSTACK_SECRET,
+          'Content-Type': 'application/json'
+        }
+      };
+      var req2 = https.request(options, function(res2) {
+        var body = '';
+        res2.on('data', function(c) { body += c; });
+        res2.on('end', function() {
+          try {
+            var result = JSON.parse(body);
+            resolve(result);
+          } catch(e) { resolve({ status: false }); }
+        });
+      });
+      req2.on('error', function() { resolve({ status: false }); });
+      req2.end();
+    });
+
+    if (verified.status && verified.data && verified.data.status === 'success') {
+      // Payment confirmed - update booking
+      var db = loadDB();
+      var idx = db.bookings.findIndex(function(b) { return b.id === bookingId; });
+      if (idx !== -1) {
+        db.bookings[idx].paid = true;
+        db.bookings[idx].paymentRef = reference;
+        db.bookings[idx].amountPaid = verified.data.amount / 100;
+        db.bookings[idx].currency = verified.data.currency;
+        db.bookings[idx].paidAt = new Date().toISOString();
+        saveDB(db);
+        // Send payment confirmation email
+        var booker = db.users.find(function(u) { return u.id === auth.id; });
+        if (booker) {
+          sendPaymentEmail(db.bookings[idx], booker.name, booker.email, verified.data.amount / 100, verified.data.currency);
+        }
+      }
+      return sendJSON(res, 200, { success: true, message: 'Payment confirmed! Your booking is now active.', amount: verified.data.amount / 100, currency: verified.data.currency });
+    } else {
+      return sendJSON(res, 400, { error: 'Payment verification failed. Please contact support.' });
+    }
+  }
+
   sendJSON(res,404,{error:'Not found.'});
 
 }).listen(PORT, function() {
@@ -1215,5 +1391,4 @@ http.createServer(async function(req, res) {
   console.log('========================================');
   console.log('');
 });
-
 
