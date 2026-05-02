@@ -992,12 +992,19 @@ async function loadBookings() {
   var search=document.getElementById('f-search').value, status=document.getElementById('f-status').value;
   var r=await api('GET','/bookings?status='+status+(search?'&search='+encodeURIComponent(search):''));
   var tbody=document.getElementById('bk-rows'), empty=document.getElementById('bk-empty');
-  if(!r.bookings||r.bookings.length===0){tbody.innerHTML='';empty.style.display='block';document.getElementById('bk-msg').innerHTML='No bookings yet.';return;}
+  if(!r.bookings||r.bookings.length===0){
+    tbody.innerHTML='';
+    empty.style.display='block';
+    document.getElementById('bk-msg').innerHTML='No bookings yet.';
+    return;
+  }
   empty.style.display='none';
-  tbody.innerHTML=r.bookings.map(function(b){
+  var rows = '';
+  for(var i=0;i<r.bookings.length;i++){
+    var b = r.bookings[i];
     var statusCell = '';
     if(ME && ME.role==='admin'){
-      statusCell += '<select class="ssel" onchange="updStatus(this.dataset.id,this.value)" data-id="'+b.id+'">';
+      statusCell = '<select class="ssel" onchange="updStatus(this.dataset.id,this.value)" data-id="'+b.id+'">';
       statusCell += '<option value="pending"'+(b.status==='pending'?' selected':'')+'>Pending</option>';
       statusCell += '<option value="active"'+(b.status==='active'?' selected':'')+'>Active</option>';
       statusCell += '<option value="transit"'+(b.status==='transit'?' selected':'')+'>In Transit</option>';
@@ -1006,22 +1013,35 @@ async function loadBookings() {
     } else {
       statusCell = '<span class="badge '+sc(b.status)+'">'+b.status+'</span>';
     }
-    var payBtn = !b.paid ? '<button class="btn btn-p" style="padding:5px 11px;font-size:.75rem;margin-right:5px" onclick="payBooking(''+b.id+'','+b.volumeLitres+')">💳 Pay</button>' : '<span style="color:var(--green);font-size:.78rem;font-weight:600">✅ Paid</span>';
-    var cancelBtn = '<button class="btn btn-d" style="padding:5px 11px;font-size:.75rem" data-bid="'+b.id+'" onclick="cancelB(this.dataset.bid)">Cancel</button>';
-    return '<tr>'
-      +'<td class="bid">'+b.id+'</td>'
-      +'<td>'+b.destination+'</td>'
-      +'<td style="color:var(--muted)">'+b.waterType+'</td>'
-      +'<td style="font-weight:600">'+fv(b.volumeLitres)+'</td>'
-      +'<td><span class="badge '+pc(b.priority)+'">'+b.priority+'</span></td>'
-      +'<td>'+statusCell+'</td>'
-      +'<td style="color:var(--muted);font-size:.8rem">'+b.createdAt.slice(0,10)+'</td>'
-      +'<td>'+payBtn+' '+cancelBtn+'</td>'
-      +'</tr>';
-  }).join('');
+    var payCell = b.paid
+      ? '<span style="color:var(--green);font-size:.78rem;font-weight:600">&#10003; Paid</span>'
+      : '<button class="btn btn-p" style="padding:5px 11px;font-size:.75rem;margin-right:4px" data-bid="'+b.id+'" data-vol="'+b.volumeLitres+'" onclick="payBooking(this.dataset.bid,parseInt(this.dataset.vol))">Pay</button>';
+    var cancelCell = '<button class="btn btn-d" style="padding:5px 11px;font-size:.75rem" data-bid="'+b.id+'" onclick="cancelB(this.dataset.bid)">Cancel</button>';
+    rows += '<tr>';
+    rows += '<td class="bid">'+b.id+'</td>';
+    rows += '<td>'+b.destination+'</td>';
+    rows += '<td style="color:var(--muted)">'+b.waterType+'</td>';
+    rows += '<td style="font-weight:600">'+fv(b.volumeLitres)+'</td>';
+    rows += '<td><span class="badge '+pc(b.priority)+'">'+b.priority+'</span></td>';
+    rows += '<td>'+statusCell+'</td>';
+    rows += '<td style="color:var(--muted);font-size:.8rem">'+b.createdAt.slice(0,10)+'</td>';
+    rows += '<td>'+payCell+' '+cancelCell+'</td>';
+    rows += '</tr>';
+  }
+  tbody.innerHTML = rows;
 }
-async function updStatus(id,status){var r=await api('PUT','/bookings/'+id+'/status',{status:status});if(r.error){toast('❌',r.error);return;}toast('✅','Booking '+id+' → '+status);}
-async function cancelB(id){if(!confirm('Cancel booking '+id+'?'))return;var r=await api('DELETE','/bookings/'+id);if(r.error){toast('❌',r.error);return;}toast('🗑️','Cancelled.');loadBookings();}
+async function updStatus(id,status){
+  var r=await api('PUT','/bookings/'+id+'/status',{status:status});
+  if(r.error){toast('❌',r.error);return;}
+  toast('✅','Booking '+id+' updated to '+status);
+}
+async function cancelB(id){
+  if(!confirm('Cancel booking '+id+'?'))return;
+  var r=await api('DELETE','/bookings/'+id);
+  if(r.error){toast('❌',r.error);return;}
+  toast('🗑️','Cancelled.');
+  loadBookings();
+}
 
 // ── BOOK WATER ────────────────────────────────────────
 function pickPill(el){el.closest('.pills').querySelectorAll('.pill').forEach(function(p){p.classList.remove('on');});el.classList.add('on');}
@@ -1391,4 +1411,5 @@ http.createServer(async function(req, res) {
   console.log('========================================');
   console.log('');
 });
+
 
