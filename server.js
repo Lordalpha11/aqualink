@@ -1114,15 +1114,7 @@ var currentBookingId = null;
 var currentBookingVol = 0;
 var paystackKey = '';
 
-// Load Paystack script
-(function(){
-  var s = document.createElement('script');
-  s.src = 'https://js.paystack.co/v1/inline.js';
-  document.head.appendChild(s);
-})();
-
-// Price per litre in Kobo (NGN) — 10 kobo per litre = N100 per 1000L
-// Adjust this to your real pricing!
+// Price per litre in Kobo (NGN)
 var PRICE_PER_LITRE_KOBO = 10;
 
 async function getPaystackKey() {
@@ -1132,55 +1124,61 @@ async function getPaystackKey() {
   return paystackKey;
 }
 
-async function payNow() {
-  if (!ME) { toast('❌', 'Please log in first.'); return; }
-  var key = await getPaystackKey();
-  if (!key) { toast('❌', 'Payment system not available.'); return; }
-  var amount = currentBookingVol * PRICE_PER_LITRE_KOBO;
-  if (amount < 100) amount = 100; // minimum 1 Naira
-
-  var handler = PaystackPop.setup({
-    key: key,
-    email: ME.email,
-    amount: amount,
-    currency: 'NGN',
-    ref: 'AQL_' + Date.now(),
-    metadata: { bookingId: currentBookingId, userName: ME.name },
-    callback: async function(response) {
-      toast('⏳', 'Verifying payment...');
-      var r = await api('POST', '/verify-payment', {
-        reference: response.reference,
-        bookingId: currentBookingId
-      });
-      if (r.success) {
-        document.getElementById('pay-section').innerHTML =
-          '<div style="text-align:center;padding:20px">' +
-          '<div style="font-size:3rem;margin-bottom:12px">✅</div>' +
-          '<div style="font-family:Bebas Neue,sans-serif;font-size:1.5rem;color:var(--green);letter-spacing:2px">PAYMENT CONFIRMED!</div>' +
-          '<p style="color:var(--muted);margin-top:8px;font-size:.85rem">NGN ' + r.amount.toLocaleString() + ' received. Your booking is now active!</p>' +
-          '</div>';
-        toast('✅', 'Payment confirmed! Check your email for receipt.');
-      } else {
-        toast('❌', r.error || 'Payment verification failed.');
-      }
-    },
-    onClose: function() {
-      toast('ℹ️', 'Payment cancelled. You can pay later from My Bookings.');
-    }
-  });
-  handler.openIframe();
+function loadPaystackScript(callback) {
+  if (window.PaystackPop) { callback(); return; }
+  var s = document.createElement('script');
+  s.src = 'https://js.paystack.co/v1/inline.js';
+  s.onload = function() { callback(); };
+  s.onerror = function() { toast('❌', 'Could not load payment system. Check your internet.'); };
+  document.head.appendChild(s);
 }
 
-// Also add Pay button to bookings table
-async function payBooking(bookingId, volumeLitres) {
+async function openPaystack(bookingId, volumeLitres) {
+  if (!ME) { toast('❌', 'Please log in first.'); return; }
   currentBookingId = bookingId;
   currentBookingVol = volumeLitres;
-  var amount = volumeLitres * PRICE_PER_LITRE_KOBO;
+  var amount = parseInt(volumeLitres) * PRICE_PER_LITRE_KOBO;
   if (amount < 100) amount = 100;
-  var amountNaira = (amount / 100).toLocaleString();
-  if (confirm('Pay NGN ' + amountNaira + ' for booking ' + bookingId + '?')) {
-    await payNow();
-  }
+  var key = await getPaystackKey();
+  if (!key) { toast('❌', 'Payment key not available.'); return; }
+  loadPaystackScript(function() {
+    try {
+      var handler = window.PaystackPop.setup({
+        key: key,
+        email: ME.email,
+        amount: amount,
+        currency: 'NGN',
+        ref: 'AQL' + Date.now(),
+        callback: async function(response) {
+          toast('⏳', 'Verifying payment...');
+          var r = await api('POST', '/verify-payment', {
+            reference: response.reference,
+            bookingId: currentBookingId
+          });
+          if (r.success) {
+            toast('✅', 'Payment confirmed! NGN ' + r.amount.toLocaleString() + ' received.');
+            loadBookings();
+          } else {
+            toast('❌', r.error || 'Payment verification failed.');
+          }
+        },
+        onClose: function() {
+          toast('ℹ️', 'Payment window closed. Pay anytime from My Bookings.');
+        }
+      });
+      handler.openIframe();
+    } catch(e) {
+      toast('❌', 'Payment error: ' + e.message);
+    }
+  });
+}
+
+async function payNow() {
+  await openPaystack(currentBookingId, currentBookingVol);
+}
+
+async function payBooking(bookingId, volumeLitres) {
+  await openPaystack(bookingId, parseInt(volumeLitres));
 }
 
 loadLandingStats();
@@ -1411,5 +1409,6 @@ http.createServer(async function(req, res) {
   console.log('========================================');
   console.log('');
 });
+
 
 
