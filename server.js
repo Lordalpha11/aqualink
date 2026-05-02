@@ -1130,54 +1130,60 @@ async function openPaystack(bookingId, volumeLitres) {
   currentBookingVol = parseInt(volumeLitres);
   var amount = currentBookingVol * PRICE_PER_LITRE_KOBO;
   if (amount < 100) amount = 100;
-  var key = await getPaystackKey();
-  if (!key) { toast('❌', 'Payment key not available.'); return; }
-
-  // Use Paystack inline redirect approach — most reliable
   var ref = 'AQL' + Date.now();
-  var params = new URLSearchParams({
-    key: key,
+
+  toast('⏳', 'Opening payment...');
+
+  // Initialize payment via server
+  var r = await api('POST', '/init-payment', {
     email: ME.email,
     amount: amount,
-    currency: 'NGN',
-    ref: ref,
-    callback_url: window.location.origin + '?payref=' + ref + '&booking=' + bookingId
+    reference: ref,
+    bookingId: bookingId
   });
-  
-  // Open Paystack in a popup window
-  var popupWidth = 500;
-  var popupHeight = 600;
+
+  if (r.error) { toast('❌', r.error); return; }
+
+  // Open Paystack checkout in popup
+  var popupWidth = 520;
+  var popupHeight = 620;
   var left = (window.screen.width - popupWidth) / 2;
   var top = (window.screen.height - popupHeight) / 2;
   var popup = window.open(
-    'https://checkout.paystack.com/?' + params.toString(),
-    'paystack',
-    'width=' + popupWidth + ',height=' + popupHeight + ',left=' + left + ',top=' + top
+    r.url,
+    'AquaLink Payment',
+    'width=' + popupWidth + ',height=' + popupHeight + ',left=' + left + ',top=' + top + ',scrollbars=yes'
   );
 
-  // Check if popup was blocked
   if (!popup || popup.closed) {
-    // Fallback: redirect directly
+    // Popup blocked — redirect instead
     toast('ℹ️', 'Redirecting to payment page...');
-    window.location.href = 'https://checkout.paystack.com/?' + params.toString();
+    window.location.href = r.url;
     return;
   }
 
-  // Poll for payment completion
+  toast('💳', 'Complete your payment in the popup window!');
+
+  // Poll for popup close
   var checkInterval = setInterval(function() {
     if (popup.closed) {
       clearInterval(checkInterval);
-      // Check URL params for payment ref
-      var urlParams = new URLSearchParams(window.location.search);
-      var payref = urlParams.get('payref');
-      if (payref) {
-        verifyAndClear(payref, bookingId);
-      } else {
-        toast('ℹ️', 'Payment window closed. Check My Bookings for status.');
-        loadBookings();
-      }
+      // Verify payment
+      toast('⏳', 'Verifying payment...');
+      api('POST', '/verify-payment', {
+        reference: r.reference || ref,
+        bookingId: bookingId
+      }).then(function(vr) {
+        if (vr.success) {
+          toast('✅', 'Payment confirmed! Your booking is now active.');
+          loadBookings();
+        } else {
+          toast('ℹ️', 'Payment not completed. You can pay anytime from My Bookings.');
+          loadBookings();
+        }
+      });
     }
-  }, 1000);
+  }, 1500);
 }
 
 function verifyAndClear(ref, bookingId) {
@@ -1366,6 +1372,50 @@ http.createServer(async function(req, res) {
   // GET /api/paystack-key
   if (route === '/paystack-key' && method === 'GET') {
     return sendJSON(res, 200, { publicKey: PAYSTACK_PUBLIC });
+  }
+
+  // POST /api/init-payment
+  if (route === '/init-payment' && method === 'POST') {
+    var auth = checkToken(getToken(req));
+    if (!auth) return sendJSON(res, 401, { error: 'Please log in.' });
+    var data = await getBody(req);
+    var https = require('https');
+    var payload = JSON.stringify({
+      email: data.email,
+      amount: data.amount,
+      reference: data.reference,
+      currency: 'NGN',
+      metadata: { bookingId: data.bookingId }
+    });
+    var result = await new Promise(function(resolve) {
+      var options = {
+        hostname: 'api.paystack.co',
+        port: 443,
+        path: '/transaction/initialize',
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + PAYSTACK_SECRET,
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(payload)
+        }
+      };
+      var req2 = https.request(options, function(res2) {
+        var body = '';
+        res2.on('data', function(c) { body += c; });
+        res2.on('end', function() {
+          try { resolve(JSON.parse(body)); }
+          catch(e) { resolve({ status: false }); }
+        });
+      });
+      req2.on('error', function(e) { resolve({ status: false, message: e.message }); });
+      req2.write(payload);
+      req2.end();
+    });
+    if (result.status && result.data && result.data.authorization_url) {
+      return sendJSON(res, 200, { url: result.data.authorization_url, reference: result.data.reference });
+    } else {
+      return sendJSON(res, 400, { error: result.message || 'Could not initialize payment.' });
+    }
   }
 
   // POST /api/verify-payment
