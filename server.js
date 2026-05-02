@@ -1124,53 +1124,72 @@ async function getPaystackKey() {
   return paystackKey;
 }
 
-function loadPaystackScript(callback) {
-  if (window.PaystackPop) { callback(); return; }
-  var s = document.createElement('script');
-  s.src = 'https://js.paystack.co/v1/inline.js';
-  s.onload = function() { callback(); };
-  s.onerror = function() { toast('❌', 'Could not load payment system. Check your internet.'); };
-  document.head.appendChild(s);
-}
-
 async function openPaystack(bookingId, volumeLitres) {
   if (!ME) { toast('❌', 'Please log in first.'); return; }
   currentBookingId = bookingId;
-  currentBookingVol = volumeLitres;
-  var amount = parseInt(volumeLitres) * PRICE_PER_LITRE_KOBO;
+  currentBookingVol = parseInt(volumeLitres);
+  var amount = currentBookingVol * PRICE_PER_LITRE_KOBO;
   if (amount < 100) amount = 100;
   var key = await getPaystackKey();
   if (!key) { toast('❌', 'Payment key not available.'); return; }
-  loadPaystackScript(function() {
-    try {
-      var handler = window.PaystackPop.setup({
-        key: key,
-        email: ME.email,
-        amount: amount,
-        currency: 'NGN',
-        ref: 'AQL' + Date.now(),
-        callback: function(response) {
-          toast('⏳', 'Verifying payment...');
-          var bookingIdToVerify = currentBookingId;
-          api('POST', '/verify-payment', {
-            reference: response.reference,
-            bookingId: bookingIdToVerify
-          }).then(function(r) {
-            if (r.success) {
-              toast('✅', 'Payment confirmed! Your booking is now active.');
-              loadBookings();
-            } else {
-              toast('❌', r.error || 'Payment verification failed. Contact support.');
-            }
-          });
-        },
-        onClose: function() {
-          toast('ℹ️', 'Payment window closed. You can pay anytime from My Bookings.');
-        }
-      });
-      handler.openIframe();
-    } catch(e) {
-      toast('❌', 'Payment error: ' + e.message);
+
+  // Use Paystack inline redirect approach — most reliable
+  var ref = 'AQL' + Date.now();
+  var params = new URLSearchParams({
+    key: key,
+    email: ME.email,
+    amount: amount,
+    currency: 'NGN',
+    ref: ref,
+    callback_url: window.location.origin + '?payref=' + ref + '&booking=' + bookingId
+  });
+  
+  // Open Paystack in a popup window
+  var popupWidth = 500;
+  var popupHeight = 600;
+  var left = (window.screen.width - popupWidth) / 2;
+  var top = (window.screen.height - popupHeight) / 2;
+  var popup = window.open(
+    'https://checkout.paystack.com/?' + params.toString(),
+    'paystack',
+    'width=' + popupWidth + ',height=' + popupHeight + ',left=' + left + ',top=' + top
+  );
+
+  // Check if popup was blocked
+  if (!popup || popup.closed) {
+    // Fallback: redirect directly
+    toast('ℹ️', 'Redirecting to payment page...');
+    window.location.href = 'https://checkout.paystack.com/?' + params.toString();
+    return;
+  }
+
+  // Poll for payment completion
+  var checkInterval = setInterval(function() {
+    if (popup.closed) {
+      clearInterval(checkInterval);
+      // Check URL params for payment ref
+      var urlParams = new URLSearchParams(window.location.search);
+      var payref = urlParams.get('payref');
+      if (payref) {
+        verifyAndClear(payref, bookingId);
+      } else {
+        toast('ℹ️', 'Payment window closed. Check My Bookings for status.');
+        loadBookings();
+      }
+    }
+  }, 1000);
+}
+
+function verifyAndClear(ref, bookingId) {
+  toast('⏳', 'Verifying payment...');
+  api('POST', '/verify-payment', { reference: ref, bookingId: bookingId }).then(function(r) {
+    // Clear URL params
+    window.history.replaceState({}, document.title, window.location.pathname);
+    if (r.success) {
+      toast('✅', 'Payment confirmed! Your booking is now active.');
+      loadBookings();
+    } else {
+      toast('❌', r.error || 'Payment verification failed.');
     }
   });
 }
@@ -1182,6 +1201,16 @@ async function payNow() {
 async function payBooking(bookingId, volumeLitres) {
   await openPaystack(bookingId, parseInt(volumeLitres));
 }
+
+// Check for payment return on page load
+(function checkPaymentReturn() {
+  var urlParams = new URLSearchParams(window.location.search);
+  var payref = urlParams.get('payref');
+  var booking = urlParams.get('booking');
+  if (payref && booking) {
+    verifyAndClear(payref, booking);
+  }
+})();
 
 loadLandingStats();
 (async function boot(){
