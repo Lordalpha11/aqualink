@@ -1149,21 +1149,23 @@ async function openPaystack(bookingId, volumeLitres) {
         amount: amount,
         currency: 'NGN',
         ref: 'AQL' + Date.now(),
-        callback: async function(response) {
+        callback: function(response) {
           toast('⏳', 'Verifying payment...');
-          var r = await api('POST', '/verify-payment', {
+          var bookingIdToVerify = currentBookingId;
+          api('POST', '/verify-payment', {
             reference: response.reference,
-            bookingId: currentBookingId
+            bookingId: bookingIdToVerify
+          }).then(function(r) {
+            if (r.success) {
+              toast('✅', 'Payment confirmed! Your booking is now active.');
+              loadBookings();
+            } else {
+              toast('❌', r.error || 'Payment verification failed. Contact support.');
+            }
           });
-          if (r.success) {
-            toast('✅', 'Payment confirmed! NGN ' + r.amount.toLocaleString() + ' received.');
-            loadBookings();
-          } else {
-            toast('❌', r.error || 'Payment verification failed.');
-          }
         },
         onClose: function() {
-          toast('ℹ️', 'Payment window closed. Pay anytime from My Bookings.');
+          toast('ℹ️', 'Payment window closed. You can pay anytime from My Bookings.');
         }
       });
       handler.openIframe();
@@ -1409,6 +1411,7 @@ http.createServer(async function(req, res) {
   console.log('========================================');
   console.log('');
 });
+
 
 
 
