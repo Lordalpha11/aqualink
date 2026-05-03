@@ -88,6 +88,8 @@ function sendEmail(toEmail, subject, htmlBody) {
   return new Promise(function(resolve) {
     try {
       var https = require('https');
+      // Resend free plan: can only send to verified emails
+      // We always send to admin, and attempt to customer
       var payload = JSON.stringify({
         from: 'AquaLink <' + FROM_EMAIL + '>',
         to: [toEmail],
@@ -191,8 +193,19 @@ function sendBookingEmails(booking, userName, userEmail) {
     '<p>Questions? Email us at <a href="mailto:aqualink79@gmail.com">aqualink79@gmail.com</a></p>' +
     '<a class=cta href="https://aqualink-1.onrender.com">Track Your Booking →</a>'
   );
+  // Always send to admin
   sendEmail(ADMIN_EMAIL, '🚨 New Booking ' + booking.id + ' — ' + booking.priority + ' — ' + booking.destination, adminBody);
+  // Attempt to send to customer (works once domain is verified)
   sendEmail(userEmail, '✅ AquaLink Booking Confirmed — ' + booking.id, customerBody);
+  // Also send combined copy to admin with customer email shown
+  if (userEmail !== ADMIN_EMAIL) {
+    var combinedBody = emailWrap(
+      '<h2>📋 Customer Copy — Booking ' + booking.id + '</h2>' +
+      '<p style="background:#fff3cd;padding:10px;border-radius:8px;color:#333;font-size:.85rem">⚠️ This is a copy of the confirmation email sent to <strong>' + userEmail + '</strong>. Until your domain is verified on Resend, forward this to the customer manually.</p>' +
+      customerBody
+    );
+    sendEmail(ADMIN_EMAIL, '📋 Forward to Customer: ' + userEmail + ' — Booking ' + booking.id, combinedBody);
+  }
 }
 
 function sendWelcomeEmail(user) {
@@ -236,7 +249,17 @@ function sendWelcomeEmail(user) {
       '<a class=cta href="https://aqualink-1.onrender.com">Book Water Now →</a>'
     );
   }
+  // Attempt to send welcome to user
   sendEmail(user.email, user.userType==='supplier'?'🚚 AquaLink Supplier Application Received':'💧 Welcome to AquaLink — Your Account is Ready', userBody);
+  // Send copy to admin to forward if needed
+  if (user.email !== ADMIN_EMAIL) {
+    var copyBody = emailWrap(
+      '<h2>📋 Customer Copy — Welcome Email</h2>' +
+      '<p style="background:#fff3cd;padding:10px;border-radius:8px;color:#333;font-size:.85rem">⚠️ This is a copy of the welcome email sent to <strong>' + user.email + '</strong>. Until your domain is verified, forward this to the customer manually.</p>' +
+      userBody
+    );
+    sendEmail(ADMIN_EMAIL, '📋 Forward to New ' + (user.userType==='supplier'?'Supplier':'User') + ': ' + user.email + ' — ' + user.name, copyBody);
+  }
 }
 
 function sendPaymentEmail(booking, userName, userEmail, amount, currency) {
@@ -1352,9 +1375,10 @@ async function loadSupplierDash() {
   var available = allBookings.filter(function(b){ return b.paid && b.status !== 'complete'; });
   var completed  = allBookings.filter(function(b){ return b.status === 'complete' && b.userId === (ME && ME.id); }).length;
   document.getElementById('sup-available').textContent  = available.length;
-  document.getElementById('sup-deliveries').textContent = completed;
-  document.getElementById('sup-pending-pay').textContent = available.filter(function(b){ return b.status==='active'; }).length;
-  document.getElementById('sup-earned').textContent = '—';
+  document.getElementById('sup-deliveries').textContent = allBookings.filter(function(b){ return b.status==='complete'; }).length;
+  document.getElementById('sup-pending-pay').textContent = available.filter(function(b){ return b.paid && b.status!=='complete'; }).length;
+  var totalEarned = allBookings.filter(function(b){ return b.status==='complete' && b.paid; }).reduce(function(s,b){ return s + ((b.amountPaid||0) * 0.85); }, 0);
+  document.getElementById('sup-earned').textContent = totalEarned > 0 ? 'NGN ' + Math.round(totalEarned).toLocaleString() : 'NGN 0';
   var tbody = document.getElementById('sup-booking-rows');
   var empty  = document.getElementById('sup-empty');
   if (available.length === 0) {
