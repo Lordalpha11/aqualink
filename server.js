@@ -502,6 +502,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;heigh
       <a href="#how-it-works">How It Works</a>
       <a href="#who">Who It's For</a>
       <a href="#suppliers">Become a Supplier</a>
+      <a href="#about">About Us</a>
+      <a href="#contact">Contact</a>
     </div>
     <div class="land-nav-btns">
       <button class="btn-outline" onclick="openAuth('login')">Login</button>
@@ -620,15 +622,226 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;heigh
     </div>
   </div>
 
+  <!-- ABOUT SECTION -->
+  <div class="section" id="about" style="background:rgba(6,32,64,0.2);border-top:1px solid rgba(0,229,255,0.08);padding:100px 60px">
+    <div style="max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center">
+      <div>
+        <div class="section-tag">About AquaLink</div>
+        <h2 class="section-title">WE BELIEVE<br>WATER IS A<br><em>HUMAN RIGHT</em></h2>
+        <p class="section-sub" style="margin-bottom:20px">AquaLink was founded on one simple belief — no person on Earth should die from lack of access to clean water. We are building the technology infrastructure to make that a reality.</p>
+        <p class="section-sub" style="margin-bottom:20px">We connect water suppliers, NGOs, governments, and communities through a single intelligent platform — making water distribution faster, more transparent, and more accountable than ever before.</p>
+        <p class="section-sub">Every booking made on AquaLink is tracked, every payment is verified, and every delivery is confirmed. Full transparency from source to destination.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div style="background:rgba(6,32,64,0.6);border:1px solid rgba(0,229,255,0.12);border-radius:20px;padding:28px;text-align:center">
+          <div style="font-family:Bebas Neue,sans-serif;font-size:2.5rem;background:linear-gradient(135deg,#38b6ff,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">100%</div>
+          <div style="font-size:.82rem;color:var(--muted);margin-top:6px">Transparent Transactions</div>
+        </div>
+        <div style="background:rgba(6,32,64,0.6);border:1px solid rgba(0,229,255,0.12);border-radius:20px;padding:28px;text-align:center">
+          <div style="font-family:Bebas Neue,sans-serif;font-size:2.5rem;background:linear-gradient(135deg,#38b6ff,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">24/7</div>
+          <div style="font-size:.82rem;color:var(--muted);margin-top:6px">Platform Available</div>
+        </div>
+        <div style="background:rgba(6,32,64,0.6);border:1px solid rgba(0,229,255,0.12);border-radius:20px;padding:28px;text-align:center">
+          <div style="font-family:Bebas Neue,sans-serif;font-size:2.5rem;background:linear-gradient(135deg,#38b6ff,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">48H</div>
+          <div style="font-size:.82rem;color:var(--muted);margin-top:6px">Emergency Response</div>
+        </div>
+        <div style="background:rgba(6,32,64,0.6);border:1px solid rgba(0,229,255,0.12);border-radius:20px;padding:28px;text-align:center">
+          <div style="font-family:Bebas Neue,sans-serif;font-size:2.5rem;background:linear-gradient(135deg,#38b6ff,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">🌍</div>
+          <div style="font-size:.82rem;color:var(--muted);margin-top:6px">Global Coverage</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTACT SECTION -->
+  <div class="section" id="contact" style="padding:100px 60px">
+    <div style="max-width:900px;margin:0 auto">
+      <div class="section-tag">Get In Touch</div>
+      <h2 class="section-title">CONTACT <em>US</em></h2>
+      <p class="section-sub" style="margin-bottom:48px">Have questions about AquaLink? Want to partner with us? We respond to every message within 24 hours.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start">
+        <div>
+          <div style="display:flex;flex-direction:column;gap:24px">
+            <div style="display:flex;gap:16px;align-items:flex-start">
+              <div style="width:44px;height:44px;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">📧</div>
+              <div>
+                <div style="font-weight:600;color:var(--ice);margin-bottom:4px">Email Us</div>
+                <div style="color:var(--muted);font-size:.88rem">aqualink79@gmail.com</div>
+                <div style="color:var(--muted);font-size:.82rem;margin-top:2px">We reply within 24 hours</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:16px;align-items:flex-start">
+              <div style="width:44px;height:44px;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">🌍</div>
+              <div>
+                <div style="font-weight:600;color:var(--ice);margin-bottom:4px">Headquarters</div>
+                <div style="color:var(--muted);font-size:.88rem">Nigeria, West Africa</div>
+                <div style="color:var(--muted);font-size:.82rem;margin-top:2px">Serving globally</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:16px;align-items:flex-start">
+              <div style="width:44px;height:44px;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">🤝</div>
+              <div>
+                <div style="font-weight:600;color:var(--ice);margin-bottom:4px">Partnerships</div>
+                <div style="color:var(--muted);font-size:.88rem">Open to NGOs, governments</div>
+                <div style="color:var(--muted);font-size:.82rem;margin-top:2px">and water suppliers</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="background:rgba(6,32,64,0.6);border:1px solid rgba(0,229,255,0.15);border-radius:20px;padding:32px">
+          <h3 style="font-family:Bebas Neue,sans-serif;font-size:1.4rem;letter-spacing:2px;color:#fff;margin-bottom:20px">SEND US A MESSAGE</h3>
+          <div style="margin-bottom:14px">
+            <input id="c-name" type="text" placeholder="Your Name" style="width:100%;padding:12px 16px;background:rgba(1,11,20,0.8);border:1.5px solid rgba(0,229,255,0.15);border-radius:12px;color:#fff;font-family:Outfit,sans-serif;font-size:.9rem;outline:none">
+          </div>
+          <div style="margin-bottom:14px">
+            <input id="c-email" type="email" placeholder="Your Email" style="width:100%;padding:12px 16px;background:rgba(1,11,20,0.8);border:1.5px solid rgba(0,229,255,0.15);border-radius:12px;color:#fff;font-family:Outfit,sans-serif;font-size:.9rem;outline:none">
+          </div>
+          <div style="margin-bottom:14px">
+            <select id="c-subject" style="width:100%;padding:12px 16px;background:rgba(1,11,20,0.8);border:1.5px solid rgba(0,229,255,0.15);border-radius:12px;color:#fff;font-family:Outfit,sans-serif;font-size:.9rem;outline:none;-webkit-appearance:none">
+              <option>I want to book water</option>
+              <option>I want to become a supplier</option>
+              <option>Partnership inquiry</option>
+              <option>Technical support</option>
+              <option>General question</option>
+            </select>
+          </div>
+          <div style="margin-bottom:18px">
+            <textarea id="c-msg" placeholder="Your message..." rows="4" style="width:100%;padding:12px 16px;background:rgba(1,11,20,0.8);border:1.5px solid rgba(0,229,255,0.15);border-radius:12px;color:#fff;font-family:Outfit,sans-serif;font-size:.9rem;outline:none;resize:vertical"></textarea>
+          </div>
+          <div id="c-result" style="margin-bottom:12px;font-size:.83rem;display:none"></div>
+          <button onclick="sendContact()" style="width:100%;padding:13px;background:linear-gradient(135deg,#1578c8,#00e5ff);border:none;border-radius:14px;color:#010b14;font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:2px;cursor:pointer">SEND MESSAGE →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEGAL PAGES (hidden, shown via modal) -->
+
+  <!-- PRIVACY POLICY -->
+  <div id="privacy-modal" style="display:none;position:fixed;inset:0;background:rgba(1,11,20,0.95);z-index:999;overflow-y:auto;padding:40px 20px">
+    <div style="max-width:800px;margin:0 auto;background:rgba(6,32,64,0.9);border:1px solid rgba(0,229,255,0.2);border-radius:24px;padding:48px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px">
+        <h2 style="font-family:Bebas Neue,sans-serif;font-size:2rem;letter-spacing:2px;color:#fff">PRIVACY POLICY</h2>
+        <button onclick="closeModal('privacy-modal')" style="background:none;border:none;color:var(--muted);font-size:1.5rem;cursor:pointer">✕</button>
+      </div>
+      <p style="color:var(--muted);font-size:.82rem;margin-bottom:24px">Last updated: May 2026</p>
+      <div style="margin-bottom:24px">
+      <h4 style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:1.5px;color:#fff;margin-bottom:10px">1. Information We Collect</h4>
+      <p style="color:var(--muted);font-size:.88rem;line-height:1.8">We collect information you provide when registering on AquaLink, including your name, email address, organization name, country, and payment details. We also collect information about your bookings and interactions with our platform.</p>
+    </div>
+      <div style="margin-bottom:24px">
+      <h4 style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:1.5px;color:#fff;margin-bottom:10px">2. How We Use Your Information</h4>
+      <p style="color:var(--muted);font-size:.88rem;line-height:1.8">We use your information to process water bookings and payments, send you booking confirmations and updates, notify you of important platform changes, match you with water suppliers in your region, and improve our services.</p>
+    </div>
+      <div style="margin-bottom:24px">
+      <h4 style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:1.5px;color:#fff;margin-bottom:10px">3. Payment Information</h4>
+      <p style="color:var(--muted);font-size:.88rem;line-height:1.8">Payments are processed securely through Paystack. AquaLink does not store your full card details. All payment data is encrypted and handled according to PCI DSS standards.</p>
+    </div>
+      <div style="margin-bottom:24px">
+      <h4 style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:1.5px;color:#fff;margin-bottom:10px">4. Data Sharing</h4>
+      <p style="color:var(--muted);font-size:.88rem;line-height:1.8">We do not sell your personal data. We share your information only with water suppliers assigned to fulfill your booking, payment processors, and when required by law.</p>
+    </div>
+      <div style="margin-bottom:24px">
+      <h4 style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:1.5px;color:#fff;margin-bottom:10px">5. Data Security</h4>
+      <p style="color:var(--muted);font-size:.88rem;line-height:1.8">We implement industry-standard security measures including encrypted data transmission, secure password hashing, and regular security reviews to protect your information.</p>
+    </div>
+      <div style="margin-bottom:24px">
+      <h4 style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:1.5px;color:#fff;margin-bottom:10px">6. Your Rights</h4>
+      <p style="color:var(--muted);font-size:.88rem;line-height:1.8">You have the right to access, correct, or delete your personal data at any time. Contact us at aqualink79@gmail.com to exercise these rights.</p>
+    </div>
+      <div style="margin-bottom:24px">
+      <h4 style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:1.5px;color:#fff;margin-bottom:10px">7. Contact Us</h4>
+      <p style="color:var(--muted);font-size:.88rem;line-height:1.8">For privacy-related questions, contact us at aqualink79@gmail.com. We will respond within 48 hours.</p>
+    </div>
+    </div>
+  </div>
+
+  <!-- TERMS OF SERVICE -->
+  <div id="terms-modal" style="display:none;position:fixed;inset:0;background:rgba(1,11,20,0.95);z-index:999;overflow-y:auto;padding:40px 20px">
+    <div style="max-width:800px;margin:0 auto;background:rgba(6,32,64,0.9);border:1px solid rgba(0,229,255,0.2);border-radius:24px;padding:48px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px">
+        <h2 style="font-family:Bebas Neue,sans-serif;font-size:2rem;letter-spacing:2px;color:#fff">TERMS OF SERVICE</h2>
+        <button onclick="closeModal('terms-modal')" style="background:none;border:none;color:var(--muted);font-size:1.5rem;cursor:pointer">✕</button>
+      </div>
+      <p style="color:var(--muted);font-size:.82rem;margin-bottom:24px">Last updated: May 2026</p>
+      <div style="margin-bottom:24px">
+      <h4 style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:1.5px;color:#fff;margin-bottom:10px">1. Acceptance of Terms</h4>
+      <p style="color:var(--muted);font-size:.88rem;line-height:1.8">By using AquaLink, you agree to these Terms of Service. If you do not agree, please do not use our platform.</p>
+    </div>
+      <div style="margin-bottom:24px">
+      <h4 style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:1.5px;color:#fff;margin-bottom:10px">2. Platform Description</h4>
+      <p style="color:var(--muted);font-size:.88rem;line-height:1.8">AquaLink is a water distribution coordination platform that connects consumers with water suppliers. We facilitate bookings and payments but are not directly responsible for water delivery — that is the responsibility of the assigned supplier.</p>
+    </div>
+      <div style="margin-bottom:24px">
+      <h4 style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:1.5px;color:#fff;margin-bottom:10px">3. User Responsibilities</h4>
+      <p style="color:var(--muted);font-size:.88rem;line-height:1.8">You must provide accurate information when registering and booking. You are responsible for ensuring the delivery location is accessible. You must pay for bookings in full before delivery is dispatched.</p>
+    </div>
+      <div style="margin-bottom:24px">
+      <h4 style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:1.5px;color:#fff;margin-bottom:10px">4. Supplier Responsibilities</h4>
+      <p style="color:var(--muted);font-size:.88rem;line-height:1.8">Verified suppliers must deliver water as specified in the booking. Suppliers must maintain the quality standards agreed upon registration. Failure to deliver may result in removal from the platform.</p>
+    </div>
+      <div style="margin-bottom:24px">
+      <h4 style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:1.5px;color:#fff;margin-bottom:10px">5. Payments</h4>
+      <p style="color:var(--muted);font-size:.88rem;line-height:1.8">All payments are processed securely through Paystack. AquaLink charges a platform fee on each transaction. Suppliers receive payment within 48 hours of confirmed delivery.</p>
+    </div>
+      <div style="margin-bottom:24px">
+      <h4 style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:1.5px;color:#fff;margin-bottom:10px">6. Cancellations</h4>
+      <p style="color:var(--muted);font-size:.88rem;line-height:1.8">Bookings may be cancelled before a supplier is assigned at no charge. Cancellations after supplier assignment may incur a fee. Emergency bookings cannot be cancelled once dispatched.</p>
+    </div>
+      <div style="margin-bottom:24px">
+      <h4 style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:1.5px;color:#fff;margin-bottom:10px">7. Limitation of Liability</h4>
+      <p style="color:var(--muted);font-size:.88rem;line-height:1.8">AquaLink is not liable for delays caused by factors outside our control including weather, road conditions, or supplier issues. Our maximum liability is limited to the amount paid for the affected booking.</p>
+    </div>
+      <div style="margin-bottom:24px">
+      <h4 style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:1.5px;color:#fff;margin-bottom:10px">8. Contact</h4>
+      <p style="color:var(--muted);font-size:.88rem;line-height:1.8">For questions about these terms, contact aqualink79@gmail.com</p>
+    </div>
+    </div>
+  </div>
+
+  <!-- REFUND POLICY -->
+  <div id="refund-modal" style="display:none;position:fixed;inset:0;background:rgba(1,11,20,0.95);z-index:999;overflow-y:auto;padding:40px 20px">
+    <div style="max-width:800px;margin:0 auto;background:rgba(6,32,64,0.9);border:1px solid rgba(0,229,255,0.2);border-radius:24px;padding:48px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px">
+        <h2 style="font-family:Bebas Neue,sans-serif;font-size:2rem;letter-spacing:2px;color:#fff">REFUND POLICY</h2>
+        <button onclick="closeModal('refund-modal')" style="background:none;border:none;color:var(--muted);font-size:1.5rem;cursor:pointer">✕</button>
+      </div>
+      <p style="color:var(--muted);font-size:.82rem;margin-bottom:24px">Last updated: May 2026</p>
+      <div style="margin-bottom:24px">
+      <h4 style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:1.5px;color:#fff;margin-bottom:10px">Full Refund</h4>
+      <p style="color:var(--muted);font-size:.88rem;line-height:1.8">You are entitled to a full refund if: Your booking is cancelled before a supplier is assigned, AquaLink cannot find a supplier for your location, or delivery is not completed within 48 hours of the agreed delivery date for emergency orders.</p>
+    </div>
+      <div style="margin-bottom:24px">
+      <h4 style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:1.5px;color:#fff;margin-bottom:10px">Partial Refund</h4>
+      <p style="color:var(--muted);font-size:.88rem;line-height:1.8">A partial refund may be issued if the volume of water delivered is less than booked, or if water quality does not meet the agreed standard.</p>
+    </div>
+      <div style="margin-bottom:24px">
+      <h4 style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:1.5px;color:#fff;margin-bottom:10px">No Refund</h4>
+      <p style="color:var(--muted);font-size:.88rem;line-height:1.8">No refund will be issued if delivery was completed as specified, the customer was unavailable to receive delivery, or incorrect delivery information was provided.</p>
+    </div>
+      <div style="margin-bottom:24px">
+      <h4 style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:1.5px;color:#fff;margin-bottom:10px">How to Request a Refund</h4>
+      <p style="color:var(--muted);font-size:.88rem;line-height:1.8">Email aqualink79@gmail.com with your Booking ID and reason for refund request. Refunds are processed within 5-7 business days back to your original payment method.</p>
+    </div>
+      <div style="margin-bottom:24px">
+      <h4 style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;letter-spacing:1.5px;color:#fff;margin-bottom:10px">Contact</h4>
+      <p style="color:var(--muted);font-size:.88rem;line-height:1.8">For refund questions, contact aqualink79@gmail.com. We aim to resolve all refund requests within 48 hours.</p>
+    </div>
+    </div>
+  </div>
+
   <!-- FOOTER -->
   <div class="land-footer">
     <div class="logo" style="justify-content:center"><div class="logo-mark"></div>AQUALINK</div>
     <p>A global platform connecting water supply to human need.</p>
     <p style="margin-top:8px">© 2026 AquaLink Global. Built to make clean water accessible for all.</p>
     <div style="margin-top:20px;display:flex;gap:20px;justify-content:center;flex-wrap:wrap">
-      <a href="#" style="color:var(--muted);text-decoration:none;font-size:.82rem" onclick="openAuth('login')">Login</a>
-      <a href="#" style="color:var(--muted);text-decoration:none;font-size:.82rem" onclick="openAuth('register','consumer')">Register as Consumer</a>
-      <a href="#" style="color:var(--muted);text-decoration:none;font-size:.82rem" onclick="openAuth('register','supplier')">Register as Supplier</a>
+      <a href="#how-it-works" style="color:var(--muted);text-decoration:none;font-size:.82rem">How It Works</a>
+      <a href="#about" style="color:var(--muted);text-decoration:none;font-size:.82rem">About Us</a>
+      <a href="#contact" style="color:var(--muted);text-decoration:none;font-size:.82rem">Contact</a>
+      <a href="#" onclick="openModal('privacy-modal')" style="color:var(--muted);text-decoration:none;font-size:.82rem">Privacy Policy</a>
+      <a href="#" onclick="openModal('terms-modal')" style="color:var(--muted);text-decoration:none;font-size:.82rem">Terms of Service</a>
+      <a href="#" onclick="openModal('refund-modal')" style="color:var(--muted);text-decoration:none;font-size:.82rem">Refund Policy</a>
     </div>
   </div>
 </div>
@@ -812,6 +1025,41 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;heigh
     </div>
   </div>
 
+  <!-- SUPPLIER DASHBOARD -->
+  <div class="page" id="pg-supplier-dash">
+    <div class="ptitle">Supplier Dashboard</div>
+    <p class="psub">Welcome! Here are the bookings in your region that need fulfillment.</p>
+    <div id="supplier-info-banner" class="info-banner" style="margin-bottom:24px">
+      🚚 <strong>How it works:</strong> When a consumer books water in your region, it appears here. Contact the customer to arrange delivery. Once delivered, mark it as complete. AquaLink will process your payment within 48 hours of confirmed delivery.
+    </div>
+    <div class="cards">
+      <div class="card"><div class="clabel">Available Orders</div><div class="cval" id="sup-available">-</div><div class="ctag">In your region</div></div>
+      <div class="card"><div class="clabel">Your Deliveries</div><div class="cval" id="sup-deliveries">-</div><div class="ctag">Completed</div></div>
+      <div class="card"><div class="clabel">Pending Payment</div><div class="cval" id="sup-pending-pay">-</div><div class="ctag">From AquaLink</div></div>
+      <div class="card"><div class="clabel">Total Earned</div><div class="cval" id="sup-earned">-</div><div class="ctag">NGN</div></div>
+    </div>
+    <div class="panel">
+      <div class="ptit">Available Bookings In Your Region</div>
+      <p style="color:var(--muted);font-size:.85rem;margin-bottom:20px">These are paid bookings that need a supplier. Contact AquaLink at aqualink79@gmail.com to accept an order.</p>
+      <div class="tscroll"><table>
+        <thead><tr><th>Booking ID</th><th>Destination</th><th>Water Type</th><th>Volume</th><th>Priority</th><th>Est. Delivery</th><th>Action</th></tr></thead>
+        <tbody id="sup-booking-rows"></tbody>
+      </table></div>
+      <div id="sup-empty" class="empty" style="display:none">
+        <div style="font-size:2.5rem;margin-bottom:10px">📦</div>
+        <p>No available bookings in your region right now.</p>
+        <p style="font-size:.82rem;margin-top:8px;color:var(--muted)">Check back soon or contact us at aqualink79@gmail.com</p>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ptit">Contact AquaLink Team</div>
+      <p style="color:var(--muted);font-size:.88rem;margin-bottom:16px">To accept a booking or report a delivery, contact our team:</p>
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <a href="mailto:aqualink79@gmail.com" style="display:inline-flex;align-items:center;gap:8px;padding:12px 20px;background:rgba(0,229,255,0.07);border:1px solid rgba(0,229,255,0.2);border-radius:12px;color:var(--glow);text-decoration:none;font-size:.88rem;font-weight:600">📧 aqualink79@gmail.com</a>
+      </div>
+    </div>
+  </div>
+
   <!-- USERS PAGE (admin only) -->
   <div class="page" id="pg-users">
     <div class="ptitle">All Users</div>
@@ -944,10 +1192,13 @@ function startApp() {
     document.getElementById('growth-btn').style.display='block';
     document.getElementById('users-btn').style.display='block';
   }
-  // Suppliers can't book water
+  // Suppliers get their own dashboard
   if(ME.userType==='supplier'){
     document.getElementById('book-btn').style.display='none';
     document.getElementById('supplier-banner').style.display='block';
+    document.getElementById('sup-dash-btn').style.display='block';
+    // Auto navigate to supplier dash
+    goPage('supplier-dash', document.getElementById('sup-dash-btn'));
   }
   loadDashboard();
 }
@@ -957,11 +1208,12 @@ function goPage(pg, btn) {
   document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('on');});
   document.getElementById('pg-'+pg).classList.add('on');
   if(btn) btn.classList.add('on');
-  if(pg==='dashboard')    loadDashboard();
-  if(pg==='bookings')     loadBookings();
-  if(pg==='suppliers-pg') loadSuppliers();
-  if(pg==='growth')       loadGrowth();
-  if(pg==='users')        loadUsers();
+  if(pg==='dashboard')     loadDashboard();
+  if(pg==='bookings')      loadBookings();
+  if(pg==='suppliers-pg')  loadSuppliers();
+  if(pg==='growth')        loadGrowth();
+  if(pg==='users')         loadUsers();
+  if(pg==='supplier-dash') loadSupplierDash();
 }
 
 // ── DASHBOARD ─────────────────────────────────────────
@@ -1092,6 +1344,39 @@ async function loadGrowth(){
   document.getElementById('top-destinations').innerHTML=sorted.length?sorted.map(function(e){return '<div class="bar-item"><div class="bar-head"><span style="color:var(--ice)">'+e[0]+'</span><span style="color:var(--glow)">'+e[1]+' booking'+(e[1]>1?'s':'')+'</span></div><div class="bar-track"><div class="bar-fill" style="width:'+(e[1]/max*100)+'%"></div></div></div>';}).join(''):'<p style="color:var(--muted);font-size:.85rem">No bookings yet.</p>';
 }
 
+// ── SUPPLIER DASHBOARD ───────────────────────────────
+async function loadSupplierDash() {
+  var r = await api('GET', '/bookings?status=all');
+  var allBookings = r.bookings || [];
+  // Show paid bookings available for suppliers
+  var available = allBookings.filter(function(b){ return b.paid && b.status !== 'complete'; });
+  var completed  = allBookings.filter(function(b){ return b.status === 'complete' && b.userId === (ME && ME.id); }).length;
+  document.getElementById('sup-available').textContent  = available.length;
+  document.getElementById('sup-deliveries').textContent = completed;
+  document.getElementById('sup-pending-pay').textContent = available.filter(function(b){ return b.status==='active'; }).length;
+  document.getElementById('sup-earned').textContent = '—';
+  var tbody = document.getElementById('sup-booking-rows');
+  var empty  = document.getElementById('sup-empty');
+  if (available.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  tbody.innerHTML = available.map(function(b) {
+    var priColor = b.priority==='Emergency'?'var(--coral)':b.priority==='Urgent'?'var(--gold)':'var(--muted)';
+    return '<tr>' +
+      '<td class="bid">' + b.id + '</td>' +
+      '<td>' + b.destination + '</td>' +
+      '<td style="color:var(--muted)">' + b.waterType + '</td>' +
+      '<td style="font-weight:600">' + fv(b.volumeLitres) + '</td>' +
+      '<td style="color:' + priColor + ';font-weight:600">' + b.priority + '</td>' +
+      '<td style="color:var(--muted)">' + (b.estimatedDelivery||'TBD') + '</td>' +
+      '<td><a href="mailto:aqualink79@gmail.com?subject=Accept Order ' + b.id + '&body=I want to accept booking ' + b.id + ' for ' + b.destination + '" style="display:inline-block;padding:5px 12px;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.2);border-radius:8px;color:var(--glow);text-decoration:none;font-size:.78rem;font-weight:600">Accept Order</a></td>' +
+      '</tr>';
+  }).join('');
+}
+
 // ── USERS ─────────────────────────────────────────────
 async function loadUsers(){
   var r=await api('GET','/users'); var note=document.getElementById('u-note');
@@ -1217,6 +1502,45 @@ async function payBooking(bookingId, volumeLitres) {
     verifyAndClear(payref, booking);
   }
 })();
+
+// ── CONTACT FORM ─────────────────────────────────────
+async function sendContact() {
+  var name    = document.getElementById('c-name').value.trim();
+  var email   = document.getElementById('c-email').value.trim();
+  var subject = document.getElementById('c-subject').value;
+  var msg     = document.getElementById('c-msg').value.trim();
+  var result  = document.getElementById('c-result');
+  if (!name || !email || !msg) {
+    result.style.display = 'block';
+    result.style.color = 'var(--coral)';
+    result.textContent = 'Please fill in all fields.';
+    return;
+  }
+  result.style.display = 'block';
+  result.style.color = 'var(--muted)';
+  result.textContent = 'Sending...';
+  var r = await api('POST', '/contact', { name: name, email: email, subject: subject, message: msg });
+  if (r.success) {
+    result.style.color = 'var(--green)';
+    result.textContent = '✅ Message sent! We will reply within 24 hours.';
+    document.getElementById('c-name').value = '';
+    document.getElementById('c-email').value = '';
+    document.getElementById('c-msg').value = '';
+  } else {
+    result.style.color = 'var(--coral)';
+    result.textContent = '❌ Failed to send. Please email us directly at aqualink79@gmail.com';
+  }
+}
+
+// ── LEGAL MODALS ─────────────────────────────────────
+function openModal(id) {
+  document.getElementById(id).style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById(id).style.display = 'none';
+  document.body.style.overflow = '';
+}
 
 loadLandingStats();
 (async function boot(){
@@ -1369,6 +1693,36 @@ http.createServer(async function(req, res) {
     return sendJSON(res,200,{users:loadDB().users.map(safeUser),total:loadDB().users.length});
   }
 
+  // POST /api/contact
+  if (route === '/contact' && method === 'POST') {
+    var data = await getBody(req);
+    if (!data.name || !data.email || !data.message) return sendJSON(res, 400, { error: 'All fields required.' });
+    var html = emailWrap(
+      '<h2>📩 New Contact Message</h2>' +
+      '<table>' +
+      '<tr><td>From</td><td>' + data.name + '</td></tr>' +
+      '<tr><td>Email</td><td>' + data.email + '</td></tr>' +
+      '<tr><td>Subject</td><td>' + data.subject + '</td></tr>' +
+      '</table>' +
+      '<div style="margin-top:20px;padding:16px;background:#f8fafb;border-radius:10px;color:#333;font-size:.9rem;line-height:1.7">' + data.message + '</div>' +
+      '<p style="margin-top:16px;font-size:.82rem;color:#4a7a9b">Reply directly to: <a href="mailto:' + data.email + '">' + data.email + '</a></p>'
+    );
+    await sendEmail(ADMIN_EMAIL, '📩 AquaLink Contact: ' + data.subject + ' — ' + data.name, html);
+    // Send auto-reply to sender
+    var replyHtml = emailWrap(
+      '<h2>✅ Message Received!</h2>' +
+      '<p>Thank you for contacting AquaLink, <strong>' + data.name + '</strong>!</p>' +
+      '<p>We have received your message and will respond within 24 hours.</p>' +
+      '<table>' +
+      '<tr><td>Subject</td><td>' + data.subject + '</td></tr>' +
+      '<tr><td>Received</td><td>' + new Date().toLocaleString() + '</td></tr>' +
+      '</table>' +
+      '<p style="margin-top:16px;color:#4a7a9b;font-size:.85rem">If you need urgent assistance, email us directly at aqualink79@gmail.com</p>'
+    );
+    sendEmail(data.email, '✅ AquaLink — We received your message!', replyHtml);
+    return sendJSON(res, 200, { success: true });
+  }
+
   // GET /api/paystack-key
   if (route === '/paystack-key' && method === 'GET') {
     return sendJSON(res, 200, { publicKey: PAYSTACK_PUBLIC });
@@ -1490,7 +1844,6 @@ http.createServer(async function(req, res) {
   console.log('========================================');
   console.log('');
 });
-
 
 
 
