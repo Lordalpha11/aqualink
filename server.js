@@ -73,6 +73,7 @@ function seedData() {
     { id: 'AQL-00003', userId: ngoId, destination: 'Dhaka, Bangladesh', waterType: 'Agricultural', volumeLitres: 800000, priority: 'Standard', status: 'pending', requestorType: 'Government', requiredBy: '2026-05-10', notes: 'Irrigation', createdAt: new Date().toISOString() }
   ];
   db.suppliers = [];
+  // All new suppliers start as pending
   saveDB(db);
 }
 
@@ -950,40 +951,179 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;heigh
      MAIN APP
 ══════════════════════════════════════════ -->
 <div id="app">
+
+  <!-- TOP BAR -->
   <div class="topbar">
     <div class="topbar-logo"><div class="logo-mark" style="width:22px;height:22px"></div>AQUALINK</div>
-    <div class="nav">
-      <button class="nb on" onclick="goPage('dashboard',this)">Dashboard</button>
-      <button class="nb" onclick="goPage('book',this)" id="book-btn">Book Water</button>
-      <button class="nb" onclick="goPage('bookings',this)">My Bookings</button>
-      <button class="nb" onclick="goPage('suppliers-pg',this)">Suppliers</button>
-      <button class="nb" onclick="goPage('growth',this)" id="growth-btn" style="display:none">Growth</button>
-      <button class="nb" onclick="goPage('users',this)" id="users-btn" style="display:none">Users</button>
-    </div>
+    <div class="nav" id="main-nav"></div>
     <div class="user-area">
       <div class="av" id="av">A</div>
-      <span class="uname" id="uname"></span>
-      <span class="urole" id="urole"></span>
+      <div>
+        <div class="uname" id="uname"></div>
+        <div class="urole" id="urole"></div>
+      </div>
       <button class="logout-btn" onclick="doLogout()">Logout</button>
     </div>
   </div>
 
-  <!-- DASHBOARD -->
-  <div class="page on" id="pg-dashboard">
-    <div class="ptitle" id="dash-title">Dashboard</div>
-    <p class="psub" id="dash-sub">Your live AquaLink overview.</p>
-    <div id="supplier-banner" class="info-banner" style="display:none">
-      🚚 <strong>You are registered as a Water Supplier.</strong> When consumers book water in your region, the AquaLink admin team will contact you to coordinate delivery. Make sure your contact details are up to date.
-    </div>
+  <!-- ═══════════════════════════════
+       ADMIN DASHBOARD
+  ═══════════════════════════════ -->
+  <div class="page" id="pg-admin">
+    <div class="ptitle">Admin Control Center</div>
+    <p class="psub">Full platform overview — you control everything from here.</p>
+
+    <!-- QUICK STATS -->
     <div class="cards">
-      <div class="card"><div class="clabel" id="c1-label">Total Bookings</div><div class="cval" id="s-total">-</div><div class="ctag" id="c1-tag">All time</div></div>
-      <div class="card"><div class="clabel" id="c2-label">Total Users</div><div class="cval" id="s-users">-</div><div class="ctag">Registered</div></div>
-      <div class="card"><div class="clabel">Litres Requested</div><div class="cval" id="s-litres">-</div><div class="ctag">Total volume</div></div>
-      <div class="card"><div class="clabel" id="c4-label">Pending Orders</div><div class="cval" id="s-pending">-</div><div class="ctag" id="c4-tag">Needs attention</div></div>
+      <div class="card"><div class="clabel">Total Bookings</div><div class="cval" id="a-bookings">-</div><div class="ctag">All time</div></div>
+      <div class="card"><div class="clabel">Total Users</div><div class="cval" id="a-users">-</div><div class="ctag">Registered</div></div>
+      <div class="card"><div class="clabel">Revenue Collected</div><div class="cval" id="a-revenue">-</div><div class="ctag">NGN total</div></div>
+      <div class="card"><div class="clabel">Pending Approvals</div><div class="cval" id="a-approvals" style="color:var(--gold)">-</div><div class="ctag">Suppliers waiting</div></div>
     </div>
-    <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:20px">
-      <div class="panel"><div class="ptit">Recent Bookings</div><div class="tscroll"><table><thead><tr><th>ID</th><th>Destination</th><th>Volume</th><th>Priority</th><th>Status</th><th>Date</th></tr></thead><tbody id="recent-rows"></tbody></table></div></div>
-      <div class="panel"><div class="ptit">By Status</div><div id="status-bars"></div></div>
+
+    <!-- STATUS BREAKDOWN -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px">
+      <div class="card" style="text-align:center"><div class="clabel">Pending Orders</div><div class="cval" id="a-pending" style="color:var(--gold)">-</div></div>
+      <div class="card" style="text-align:center"><div class="clabel">Active Orders</div><div class="cval" id="a-active" style="color:var(--green)">-</div></div>
+      <div class="card" style="text-align:center"><div class="clabel">In Transit</div><div class="cval" id="a-transit" style="color:var(--glow)">-</div></div>
+      <div class="card" style="text-align:center"><div class="clabel">Completed</div><div class="cval" id="a-complete" style="color:var(--muted)">-</div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:24px">
+      <!-- RECENT BOOKINGS -->
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div class="ptit" style="margin:0">Recent Bookings</div>
+          <button class="btn btn-g" style="padding:6px 14px;font-size:.78rem" onclick="goPage('admin-bookings')">View All →</button>
+        </div>
+        <div class="tscroll"><table>
+          <thead><tr><th>ID</th><th>Destination</th><th>Volume</th><th>Priority</th><th>Status</th><th>Paid</th></tr></thead>
+          <tbody id="a-recent-rows"></tbody>
+        </table></div>
+      </div>
+      <!-- QUICK ACTIONS -->
+      <div>
+        <div class="panel" style="margin-bottom:16px">
+          <div class="ptit">Quick Actions</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <button class="btn btn-p" style="width:100%;padding:12px" onclick="goPage('admin-suppliers')">✅ Approve Suppliers</button>
+            <button class="btn btn-g" style="width:100%;padding:12px" onclick="goPage('admin-bookings')">💧 Manage Bookings</button>
+            <button class="btn btn-g" style="width:100%;padding:12px" onclick="goPage('admin-users')">👥 View All Users</button>
+            <button class="btn btn-g" style="width:100%;padding:12px" onclick="goPage('admin-revenue')">💰 Revenue Report</button>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="ptit">By Status</div>
+          <div id="a-status-bars"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN — ALL BOOKINGS -->
+  <div class="page" id="pg-admin-bookings">
+    <div class="ptitle">All Bookings</div>
+    <p class="psub">Every water booking across the entire platform.</p>
+    <div class="frow">
+      <input type="text" id="ab-search" placeholder="Search ID or destination..." oninput="loadAdminBookings()" style="flex:1;min-width:160px">
+      <select id="ab-status" onchange="loadAdminBookings()"><option value="all">All Statuses</option><option value="pending">Pending</option><option value="active">Active</option><option value="transit">In Transit</option><option value="complete">Complete</option></select>
+      <select id="ab-priority" onchange="loadAdminBookings()"><option value="all">All Priorities</option><option value="Emergency">Emergency</option><option value="Urgent">Urgent</option><option value="Standard">Standard</option></select>
+      <button class="btn btn-g" style="padding:9px 16px;font-size:.8rem" onclick="loadAdminBookings()">↻ Refresh</button>
+    </div>
+    <div class="panel" style="padding:0;overflow:hidden">
+      <div class="tscroll"><table>
+        <thead><tr><th>ID</th><th>Customer</th><th>Destination</th><th>Volume</th><th>Priority</th><th>Status</th><th>Paid</th><th>Date</th><th>Action</th></tr></thead>
+        <tbody id="ab-rows"></tbody>
+      </table></div>
+      <div id="ab-empty" class="empty" style="display:none"><div style="font-size:2rem;margin-bottom:10px">📦</div>No bookings found.</div>
+    </div>
+  </div>
+
+  <!-- ADMIN — SUPPLIERS -->
+  <div class="page" id="pg-admin-suppliers">
+    <div class="ptitle">Supplier Management</div>
+    <p class="psub">Review and approve water supplier applications.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+      <div class="card"><div class="clabel">Pending Approval</div><div class="cval" id="sup-pending-count" style="color:var(--gold)">-</div></div>
+      <div class="card"><div class="clabel">Verified Suppliers</div><div class="cval" id="sup-verified-count" style="color:var(--green)">-</div></div>
+    </div>
+    <div class="panel" style="padding:0;overflow:hidden">
+      <div class="tscroll"><table>
+        <thead><tr><th>Name</th><th>Organization</th><th>Country</th><th>Water Types</th><th>Coverage</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody id="sup-mgmt-rows"></tbody>
+      </table></div>
+      <div id="sup-mgmt-empty" class="empty" style="display:none"><div style="font-size:2rem;margin-bottom:10px">🚚</div>No suppliers registered yet.</div>
+    </div>
+  </div>
+
+  <!-- ADMIN — USERS -->
+  <div class="page" id="pg-admin-users">
+    <div class="ptitle">All Users</div>
+    <p class="psub">Every registered account on AquaLink.</p>
+    <div class="panel" style="padding:0;overflow:hidden">
+      <div class="tscroll"><table>
+        <thead><tr><th>Name</th><th>Email</th><th>Type</th><th>Organization</th><th>Country</th><th>Role</th><th>Joined</th></tr></thead>
+        <tbody id="admin-user-rows"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ADMIN — REVENUE -->
+  <div class="page" id="pg-admin-revenue">
+    <div class="ptitle">Revenue Report</div>
+    <p class="psub">All payments collected through AquaLink.</p>
+    <div class="cards">
+      <div class="card"><div class="clabel">Total Collected</div><div class="cval" id="rev-total">-</div><div class="ctag">NGN</div></div>
+      <div class="card"><div class="clabel">Platform Commission</div><div class="cval" id="rev-commission">-</div><div class="ctag">15% of orders</div></div>
+      <div class="card"><div class="clabel">Supplier Payouts</div><div class="cval" id="rev-payout">-</div><div class="ctag">85% to suppliers</div></div>
+      <div class="card"><div class="clabel">Paid Orders</div><div class="cval" id="rev-count">-</div><div class="ctag">Transactions</div></div>
+    </div>
+    <div class="panel" style="padding:0;overflow:hidden">
+      <div class="tscroll"><table>
+        <thead><tr><th>Booking ID</th><th>Customer</th><th>Destination</th><th>Amount (NGN)</th><th>Commission</th><th>Supplier Payout</th><th>Date</th></tr></thead>
+        <tbody id="rev-rows"></tbody>
+      </table></div>
+      <div id="rev-empty" class="empty" style="display:none"><div style="font-size:2rem;margin-bottom:10px">💰</div>No payments yet.</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════
+       CONSUMER PAGES
+  ═══════════════════════════════ -->
+
+  <!-- CONSUMER DASHBOARD -->
+  <div class="page" id="pg-dashboard">
+    <div class="ptitle" id="dash-title">Dashboard</div>
+    <p class="psub" id="dash-sub">Welcome! Book clean water for your community.</p>
+    <div class="cards">
+      <div class="card"><div class="clabel">My Bookings</div><div class="cval" id="s-total">-</div><div class="ctag">All time</div></div>
+      <div class="card"><div class="clabel">Pending Orders</div><div class="cval" id="s-pending" style="color:var(--gold)">-</div><div class="ctag">Awaiting delivery</div></div>
+      <div class="card"><div class="clabel">Litres Ordered</div><div class="cval" id="s-litres">-</div><div class="ctag">Total volume</div></div>
+      <div class="card"><div class="clabel">Completed Orders</div><div class="cval" id="s-complete" style="color:var(--green)">-</div><div class="ctag">Delivered</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:24px">
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div class="ptit" style="margin:0">My Recent Bookings</div>
+          <button class="btn btn-g" style="padding:6px 14px;font-size:.78rem" onclick="goPage('bookings')">View All →</button>
+        </div>
+        <div class="tscroll"><table>
+          <thead><tr><th>ID</th><th>Destination</th><th>Volume</th><th>Status</th><th>Paid</th></tr></thead>
+          <tbody id="recent-rows"></tbody>
+        </table></div>
+      </div>
+      <div class="panel">
+        <div class="ptit">Quick Actions</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <button class="btn btn-p" style="width:100%;padding:14px" onclick="goPage('book')">💧 Book Water Now</button>
+          <button class="btn btn-g" style="width:100%;padding:12px" onclick="goPage('bookings')">📋 Track My Orders</button>
+          <button class="btn btn-g" style="width:100%;padding:12px" onclick="goPage('suppliers-pg')">🚚 View Suppliers</button>
+        </div>
+        <div style="margin-top:20px;padding:16px;background:rgba(0,229,255,0.05);border:1px solid rgba(0,229,255,0.15);border-radius:12px">
+          <div style="font-size:.82rem;font-weight:600;color:var(--ice);margin-bottom:6px">Need Help?</div>
+          <div style="font-size:.78rem;color:var(--muted);line-height:1.6">Contact us at<br><a href="mailto:aqualink79@gmail.com" style="color:var(--glow)">aqualink79@gmail.com</a></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -995,8 +1135,13 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;heigh
       <div class="big">💧</div><h3>BOOKING CONFIRMED!</h3>
       <div class="id-chip" id="s-id">AQL-XXXXX</div>
       <p id="s-msg"></p>
-      <p style="margin-top:12px;font-size:.82rem;color:var(--muted)">Our team will contact you within 24 hours to coordinate delivery with a verified supplier in your region.</p>
-      <button class="btn btn-p" style="margin-top:22px" onclick="goPage('bookings',document.querySelectorAll('.nb')[2])">VIEW MY BOOKINGS →</button>
+      <div id="pay-section" style="margin-top:20px;padding:20px;background:rgba(6,32,64,0.5);border:1px solid rgba(0,229,255,0.2);border-radius:16px">
+        <p style="font-size:.88rem;color:var(--muted);margin-bottom:6px">Complete payment to activate your booking</p>
+        <div id="pay-amount" style="font-family:Bebas Neue,sans-serif;font-size:2rem;color:var(--glow);letter-spacing:2px;margin-bottom:14px">—</div>
+        <button class="btn btn-p" id="pay-btn" onclick="payNow()" style="width:100%;padding:14px;border-radius:14px;font-size:1rem">💳 PAY NOW WITH PAYSTACK</button>
+        <p style="font-size:.75rem;color:var(--muted);margin-top:10px">Secure payment. Supports cards, bank transfer and USSD.</p>
+      </div>
+      <button class="btn btn-g" style="margin-top:14px" onclick="goPage('bookings')">PAY LATER — VIEW BOOKINGS</button>
     </div>
     <div class="panel" id="book-form">
       <div class="form-grid">
@@ -1010,85 +1155,86 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;heigh
         <div class="fg"><label>Additional Notes</label><input type="text" id="b-notes" placeholder="Special instructions..."></div>
       </div>
       <div id="b-err" style="background:rgba(255,107,107,0.12);border:1px solid rgba(255,107,107,0.25);border-radius:10px;padding:10px 14px;color:var(--coral);font-size:.83rem;margin-top:14px;display:none"></div>
-      <div class="btn-row"><button class="btn btn-p" id="b-btn" onclick="submitBook()">CONFIRM BOOKING →</button><button class="btn btn-g" onclick="resetBook()">Clear</button></div>
+      <div class="btn-row">
+        <button class="btn btn-p" id="b-btn" onclick="submitBook()">CONFIRM BOOKING →</button>
+        <button class="btn btn-g" onclick="resetBook()">Clear</button>
+      </div>
     </div>
   </div>
 
   <!-- MY BOOKINGS -->
   <div class="page" id="pg-bookings">
     <div class="ptitle">My Bookings</div>
-    <p class="psub">Track and manage all your water booking requests.</p>
-    <div class="frow"><input type="text" id="f-search" placeholder="Search..." oninput="loadBookings()" style="flex:1;min-width:150px"><select id="f-status" onchange="loadBookings()"><option value="all">All Statuses</option><option value="pending">Pending</option><option value="active">Active</option><option value="transit">In Transit</option><option value="complete">Complete</option></select><button class="btn btn-g" style="padding:9px 16px;font-size:.8rem" onclick="loadBookings()">↻ Refresh</button></div>
-    <div class="panel" style="padding:0;overflow:hidden"><div class="tscroll"><table><thead><tr><th>ID</th><th>Destination</th><th>Type</th><th>Volume</th><th>Priority</th><th>Status</th><th>Date</th><th>Action</th></tr></thead><tbody id="bk-rows"></tbody></table></div><div id="bk-empty" class="empty" style="display:none"><div style="font-size:2.5rem;margin-bottom:10px">💧</div><span id="bk-msg">No bookings yet.</span></div></div>
+    <p class="psub">Track and manage all your water orders.</p>
+    <div class="frow">
+      <input type="text" id="f-search" placeholder="Search..." oninput="loadBookings()" style="flex:1;min-width:150px">
+      <select id="f-status" onchange="loadBookings()"><option value="all">All Statuses</option><option value="pending">Pending</option><option value="active">Active</option><option value="transit">In Transit</option><option value="complete">Complete</option></select>
+      <button class="btn btn-g" style="padding:9px 16px;font-size:.8rem" onclick="loadBookings()">↻ Refresh</button>
+    </div>
+    <div class="panel" style="padding:0;overflow:hidden">
+      <div class="tscroll"><table>
+        <thead><tr><th>ID</th><th>Destination</th><th>Type</th><th>Volume</th><th>Priority</th><th>Status</th><th>Paid</th><th>Date</th><th>Action</th></tr></thead>
+        <tbody id="bk-rows"></tbody>
+      </table></div>
+      <div id="bk-empty" class="empty" style="display:none"><div style="font-size:2.5rem;margin-bottom:10px">💧</div><span id="bk-msg">No bookings yet.</span></div>
+    </div>
   </div>
 
   <!-- SUPPLIERS PAGE -->
   <div class="page" id="pg-suppliers-pg">
     <div class="ptitle">Water Suppliers</div>
     <p class="psub">Verified water suppliers registered on AquaLink.</p>
-    <div class="info-banner">ℹ️ <strong>How suppliers work:</strong> Suppliers listed here are registered companies and individuals who provide water in their regions. When you make a booking, our admin team matches you with the nearest available supplier and coordinates the delivery.</div>
-    <div class="panel" style="padding:0;overflow:hidden"><div class="tscroll"><table><thead><tr><th>Supplier Name</th><th>Organization</th><th>Country</th><th>Water Types</th><th>Coverage</th><th>Status</th></tr></thead><tbody id="supplier-rows"></tbody></table></div><div id="supplier-empty" class="empty" style="display:none"><div style="font-size:2.5rem;margin-bottom:10px">🚚</div><p>No verified suppliers yet.</p><p style="margin-top:8px;font-size:.83rem"><a href="#" onclick="openAuth('register','supplier')" style="color:var(--glow)">Apply to become our first supplier →</a></p></div></div>
-  </div>
-
-  <!-- GROWTH PAGE (admin only) -->
-  <div class="page" id="pg-growth">
-    <div class="ptitle">Growth Tracking</div>
-    <p class="psub">Real platform metrics — how AquaLink is growing.</p>
-    <div class="growth-grid">
-      <div class="growth-card"><h4>TOTAL BOOKINGS</h4><div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--glow)" id="g-bookings">-</div><div style="font-size:.8rem;color:var(--muted);margin-top:6px">All time</div></div>
-      <div class="growth-card"><h4>TOTAL USERS</h4><div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--glow)" id="g-users">-</div><div style="font-size:.8rem;color:var(--muted);margin-top:6px">Registered accounts</div></div>
-      <div class="growth-card"><h4>TOTAL SUPPLIERS</h4><div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--glow)" id="g-suppliers">-</div><div style="font-size:.8rem;color:var(--muted);margin-top:6px">Verified suppliers</div></div>
-      <div class="growth-card"><h4>LITRES REQUESTED</h4><div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--glow)" id="g-litres">-</div><div style="font-size:.8rem;color:var(--muted);margin-top:6px">Total volume</div></div>
-      <div class="growth-card"><h4>EMERGENCY ORDERS</h4><div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--coral)" id="g-emergency">-</div><div style="font-size:.8rem;color:var(--muted);margin-top:6px">High priority bookings</div></div>
-      <div class="growth-card"><h4>COMPLETED ORDERS</h4><div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--green)" id="g-complete">-</div><div style="font-size:.8rem;color:var(--muted);margin-top:6px">Successfully delivered</div></div>
-    </div>
-    <div class="panel" style="margin-top:24px">
-      <div class="ptit">Top Destinations</div>
-      <div id="top-destinations"></div>
+    <div class="info-banner">ℹ️ <strong>How it works:</strong> When you book water, our team matches you with the nearest verified supplier and coordinates delivery to your location.</div>
+    <div class="panel" style="padding:0;overflow:hidden">
+      <div class="tscroll"><table>
+        <thead><tr><th>Supplier</th><th>Country</th><th>Water Types</th><th>Coverage Area</th><th>Status</th></tr></thead>
+        <tbody id="supplier-rows"></tbody>
+      </table></div>
+      <div id="supplier-empty" class="empty" style="display:none">
+        <div style="font-size:2.5rem;margin-bottom:10px">🚚</div>
+        <p>No verified suppliers yet.</p>
+        <p style="margin-top:8px;font-size:.83rem"><a href="#" onclick="doLogout();setTimeout(function(){openAuth('register','supplier')},500)" style="color:var(--glow)">Apply to become our first supplier →</a></p>
+      </div>
     </div>
   </div>
 
-  <!-- SUPPLIER DASHBOARD -->
+  <!-- ═══════════════════════════════
+       SUPPLIER DASHBOARD
+  ═══════════════════════════════ -->
   <div class="page" id="pg-supplier-dash">
     <div class="ptitle">Supplier Dashboard</div>
-    <p class="psub">Welcome! Here are the bookings in your region that need fulfillment.</p>
-    <div id="supplier-info-banner" class="info-banner" style="margin-bottom:24px">
-      🚚 <strong>How it works:</strong> When a consumer books water in your region, it appears here. Contact the customer to arrange delivery. Once delivered, mark it as complete. AquaLink will process your payment within 48 hours of confirmed delivery.
+    <p class="psub">Welcome! Manage your water supply orders here.</p>
+    <div id="sup-status-banner" class="info-banner" style="display:none;background:rgba(255,209,102,0.08);border-color:rgba(255,209,102,0.2);color:var(--gold)">
+      ⏳ <strong>Your account is pending verification.</strong> Our team will review your application within 24 hours and notify you by email when approved.
+    </div>
+    <div id="sup-verified-banner" class="info-banner" style="display:none">
+      ✅ <strong>You are a Verified AquaLink Supplier!</strong> Orders in your region will appear below. Contact us at aqualink79@gmail.com to accept any order.
     </div>
     <div class="cards">
       <div class="card"><div class="clabel">Available Orders</div><div class="cval" id="sup-available">-</div><div class="ctag">In your region</div></div>
-      <div class="card"><div class="clabel">Your Deliveries</div><div class="cval" id="sup-deliveries">-</div><div class="ctag">Completed</div></div>
+      <div class="card"><div class="clabel">Completed Deliveries</div><div class="cval" id="sup-deliveries">-</div><div class="ctag">All time</div></div>
       <div class="card"><div class="clabel">Pending Payment</div><div class="cval" id="sup-pending-pay">-</div><div class="ctag">From AquaLink</div></div>
-      <div class="card"><div class="clabel">Total Earned</div><div class="cval" id="sup-earned">-</div><div class="ctag">NGN</div></div>
+      <div class="card"><div class="clabel">Total Earned</div><div class="cval" id="sup-earned">-</div><div class="ctag">NGN (85% of orders)</div></div>
     </div>
     <div class="panel">
-      <div class="ptit">Available Bookings In Your Region</div>
-      <p style="color:var(--muted);font-size:.85rem;margin-bottom:20px">These are paid bookings that need a supplier. Contact AquaLink at aqualink79@gmail.com to accept an order.</p>
+      <div class="ptit">Available Paid Bookings</div>
+      <p style="color:var(--muted);font-size:.85rem;margin-bottom:16px">These bookings have been paid and need a supplier. Click Accept to notify AquaLink you can fulfill this order.</p>
       <div class="tscroll"><table>
-        <thead><tr><th>Booking ID</th><th>Destination</th><th>Water Type</th><th>Volume</th><th>Priority</th><th>Est. Delivery</th><th>Action</th></tr></thead>
+        <thead><tr><th>Booking ID</th><th>Destination</th><th>Water Type</th><th>Volume</th><th>Priority</th><th>Est. Delivery</th><th>Your Payout</th><th>Action</th></tr></thead>
         <tbody id="sup-booking-rows"></tbody>
       </table></div>
       <div id="sup-empty" class="empty" style="display:none">
-        <div style="font-size:2.5rem;margin-bottom:10px">📦</div>
-        <p>No available bookings in your region right now.</p>
-        <p style="font-size:.82rem;margin-top:8px;color:var(--muted)">Check back soon or contact us at aqualink79@gmail.com</p>
+        <div style="font-size:2rem;margin-bottom:10px">📦</div>
+        <p>No available orders right now. Check back soon!</p>
       </div>
     </div>
     <div class="panel">
-      <div class="ptit">Contact AquaLink Team</div>
-      <p style="color:var(--muted);font-size:.88rem;margin-bottom:16px">To accept a booking or report a delivery, contact our team:</p>
-      <div style="display:flex;gap:16px;flex-wrap:wrap">
-        <a href="mailto:aqualink79@gmail.com" style="display:inline-flex;align-items:center;gap:8px;padding:12px 20px;background:rgba(0,229,255,0.07);border:1px solid rgba(0,229,255,0.2);border-radius:12px;color:var(--glow);text-decoration:none;font-size:.88rem;font-weight:600">📧 aqualink79@gmail.com</a>
-      </div>
+      <div class="ptit">Contact AquaLink</div>
+      <p style="color:var(--muted);font-size:.88rem;margin-bottom:16px">To accept an order, report a delivery, or ask any question:</p>
+      <a href="mailto:aqualink79@gmail.com" style="display:inline-flex;align-items:center;gap:8px;padding:12px 20px;background:rgba(0,229,255,0.07);border:1px solid rgba(0,229,255,0.2);border-radius:12px;color:var(--glow);text-decoration:none;font-size:.88rem;font-weight:600">📧 aqualink79@gmail.com</a>
     </div>
   </div>
 
-  <!-- USERS PAGE (admin only) -->
-  <div class="page" id="pg-users">
-    <div class="ptitle">All Users</div>
-    <p class="psub">Everyone registered on AquaLink.</p>
-    <div class="panel" style="padding:0;overflow:hidden"><div class="tscroll"><table><thead><tr><th>Name</th><th>Email</th><th>Type</th><th>Organization</th><th>Country</th><th>Role</th><th>Joined</th></tr></thead><tbody id="user-rows"></tbody></table></div><div id="u-note" class="empty" style="display:none"><div style="font-size:2rem;margin-bottom:10px">🔒</div>Admin access required.</div></div>
-  </div>
 </div>
 
 <div class="toast" id="toast"><span id="t-i">✅</span>&nbsp;<span id="t-m"></span></div>
@@ -1096,7 +1242,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;heigh
 <script>
 var TOKEN = localStorage.getItem('aq_token');
 var ME = null;
-var selectedType = 'consumer';
+var currentBookingId = null;
+var currentBookingVol = 0;
+var paystackKey = '';
+var PRICE_PER_LITRE_KOBO = 10;
 
 // ── API ───────────────────────────────────────────────
 async function api(method, path, data) {
@@ -1107,43 +1256,19 @@ async function api(method, path, data) {
   catch(e) { return { error: 'Cannot reach server.' }; }
 }
 
-// ── LANDING STATS ─────────────────────────────────────
-async function loadLandingStats() {
-  var r = await api('GET', '/public-stats');
-  if (r.error) return;
-  animCount('land-bookings', r.totalBookings);
-  animCount('land-users', r.totalUsers);
-  var l = r.totalLitres;
-  document.getElementById('land-litres').textContent = l>=1e6?(l/1e6).toFixed(1)+'M': l>=1000?(l/1000).toFixed(0)+'K': l||'0';
-  animCount('land-suppliers', r.totalSuppliers);
-}
-function animCount(id, target) {
-  var el = document.getElementById(id); if(!el) return;
-  var start = performance.now(), dur = 1500;
-  (function tick(now) {
-    var p = Math.min((now-start)/dur, 1), v = Math.round(target * (1-Math.pow(1-p,3)));
-    el.textContent = v.toLocaleString();
-    if (p < 1) requestAnimationFrame(tick);
-    else el.textContent = target.toLocaleString();
-  })(start);
-}
-
-// ── AUTH MODAL ────────────────────────────────────────
+// ── AUTH ──────────────────────────────────────────────
 function openAuth(tab, type) {
   selectedType = type || 'consumer';
   switchAuthTab(tab === 'login' ? 'login' : 'register');
-  if (tab !== 'login') {
-    selectType(selectedType);
-    setTimeout(function() { document.getElementById('type-selector').scrollIntoView({behavior:'smooth'}); }, 100);
-  }
+  if (tab !== 'login') selectType(selectedType);
   clearAuthMsg();
   document.getElementById('auth-overlay').classList.add('open');
 }
 function closeAuth() { document.getElementById('auth-overlay').classList.remove('open'); }
-function closeOverlayOutside(e) { if(e.target === document.getElementById('auth-overlay')) closeAuth(); }
+function closeOverlayOutside(e) { if(e.target===document.getElementById('auth-overlay')) closeAuth(); }
 
 function switchAuthTab(tab) {
-  document.querySelectorAll('.mtab').forEach(function(t,i){ t.classList.toggle('on', (tab==='login'&&i===0)||(tab==='register'&&i===1)); });
+  document.querySelectorAll('.mtab').forEach(function(t,i){ t.classList.toggle('on',(tab==='login'&&i===0)||(tab==='register'&&i===1)); });
   document.getElementById('auth-login').style.display    = tab==='login'    ? 'block' : 'none';
   document.getElementById('auth-register').style.display = tab==='register' ? 'block' : 'none';
   clearAuthMsg();
@@ -1152,16 +1277,13 @@ function clearAuthMsg() { document.getElementById('merr').style.display='none'; 
 function showMErr(msg) { var e=document.getElementById('merr'); e.textContent=msg; e.style.display='block'; }
 function showMOk(msg)  { var e=document.getElementById('mok');  e.textContent=msg; e.style.display='block'; }
 
+var selectedType = 'consumer';
 function selectType(type) {
   selectedType = type;
   document.getElementById('type-consumer').classList.toggle('selected', type==='consumer');
   document.getElementById('type-supplier').classList.toggle('selected', type==='supplier');
   document.getElementById('r-supplier-extra').style.display = type==='supplier' ? 'block' : 'none';
-  if (type==='supplier') {
-    document.getElementById('r-role').value = 'supplier';
-  } else {
-    document.getElementById('r-role').value = 'user';
-  }
+  document.getElementById('r-role').value = type==='supplier' ? 'supplier' : 'user';
 }
 
 async function doLogin() {
@@ -1184,7 +1306,7 @@ async function doRegister() {
   if(pass.length<6){showMErr('Password must be at least 6 characters.');return;}
   var supplierData = {};
   if(selectedType==='supplier'){
-    supplierData = { waterTypes: document.getElementById('r-water-types').value, capacity: document.getElementById('r-capacity').value, regions: document.getElementById('r-regions').value };
+    supplierData = { waterTypes:document.getElementById('r-water-types').value, capacity:document.getElementById('r-capacity').value, regions:document.getElementById('r-regions').value };
   }
   var btn=document.getElementById('r-btn'); btn.disabled=true; btn.textContent='Creating account...';
   var r=await api('POST','/register',{name:name,email:email,password:pass,country:country,organization:org,role:role,userType:selectedType,supplierData:supplierData});
@@ -1202,109 +1324,266 @@ function doLogout() {
   toast('👋','Logged out. See you soon!');
 }
 
-// ── APP ───────────────────────────────────────────────
+// ── APP START ─────────────────────────────────────────
 function startApp() {
   document.getElementById('landing').style.display='none';
   document.getElementById('app').style.display='block';
-  document.getElementById('av').textContent=ME.name[0].toUpperCase();
-  document.getElementById('uname').textContent=ME.name.split(' ')[0];
-  document.getElementById('urole').textContent=ME.userType==='supplier'?'Supplier':ME.role.toUpperCase();
-  document.getElementById('b-date').value=new Date(Date.now()+7*864e5).toISOString().slice(0,10);
-  // Show admin-only pages
-  if(ME.role==='admin'){
-    document.getElementById('growth-btn').style.display='block';
-    document.getElementById('users-btn').style.display='block';
+  document.getElementById('av').textContent = ME.name[0].toUpperCase();
+  document.getElementById('uname').textContent = ME.name.split(' ')[0];
+  document.getElementById('urole').textContent = ME.userType==='supplier' ? '🚚 Supplier' : ME.role==='admin' ? '👑 Admin' : '💧 Consumer';
+  document.getElementById('b-date').value = new Date(Date.now()+7*864e5).toISOString().slice(0,10);
+
+  // Build navigation based on role
+  var nav = document.getElementById('main-nav');
+  nav.innerHTML = '';
+
+  if (ME.role === 'admin') {
+    // ADMIN NAV
+    addNav(nav, 'Overview', 'admin');
+    addNav(nav, 'All Bookings', 'admin-bookings');
+    addNav(nav, 'Suppliers', 'admin-suppliers');
+    addNav(nav, 'Users', 'admin-users');
+    addNav(nav, 'Revenue', 'admin-revenue');
+    goPage('admin');
+  } else if (ME.userType === 'supplier') {
+    // SUPPLIER NAV
+    addNav(nav, 'My Dashboard', 'supplier-dash');
+    addNav(nav, 'Suppliers Page', 'suppliers-pg');
+    goPage('supplier-dash');
+  } else {
+    // CONSUMER NAV
+    addNav(nav, 'Dashboard', 'dashboard');
+    addNav(nav, 'Book Water', 'book');
+    addNav(nav, 'My Bookings', 'bookings');
+    addNav(nav, 'Suppliers', 'suppliers-pg');
+    goPage('dashboard');
   }
-  // Suppliers get their own dashboard
-  if(ME.userType==='supplier'){
-    document.getElementById('book-btn').style.display='none';
-    document.getElementById('supplier-banner').style.display='block';
-    document.getElementById('sup-dash-btn').style.display='block';
-    // Auto navigate to supplier dash
-    goPage('supplier-dash', document.getElementById('sup-dash-btn'));
-  }
-  loadDashboard();
 }
 
-function goPage(pg, btn) {
+function addNav(nav, label, page) {
+  var btn = document.createElement('button');
+  btn.className = 'nb';
+  btn.textContent = label;
+  btn.onclick = function() { goPage(page); };
+  btn.id = 'nav-' + page;
+  nav.appendChild(btn);
+}
+
+// ── NAVIGATION ────────────────────────────────────────
+function goPage(pg) {
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('on');});
   document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('on');});
-  document.getElementById('pg-'+pg).classList.add('on');
-  if(btn) btn.classList.add('on');
-  if(pg==='dashboard')     loadDashboard();
-  if(pg==='bookings')      loadBookings();
-  if(pg==='suppliers-pg')  loadSuppliers();
-  if(pg==='growth')        loadGrowth();
-  if(pg==='users')         loadUsers();
-  if(pg==='supplier-dash') loadSupplierDash();
+  var pageEl = document.getElementById('pg-'+pg);
+  if (pageEl) pageEl.classList.add('on');
+  var navEl = document.getElementById('nav-'+pg);
+  if (navEl) navEl.classList.add('on');
+
+  if(pg==='admin')            loadAdminDashboard();
+  if(pg==='admin-bookings')   loadAdminBookings();
+  if(pg==='admin-suppliers')  loadAdminSuppliers();
+  if(pg==='admin-users')      loadAdminUsers();
+  if(pg==='admin-revenue')    loadAdminRevenue();
+  if(pg==='dashboard')        loadConsumerDashboard();
+  if(pg==='bookings')         loadBookings();
+  if(pg==='suppliers-pg')     loadSuppliers();
+  if(pg==='supplier-dash')    loadSupplierDash();
 }
 
-// ── DASHBOARD ─────────────────────────────────────────
-async function loadDashboard() {
-  if(!ME) return;
-  if(ME.role==='admin'){
-    var r=await api('GET','/stats'); if(r.error) return;
-    document.getElementById('s-total').textContent=r.totalBookings;
-    document.getElementById('s-users').textContent=r.totalUsers;
-    var l=r.totalLitres; document.getElementById('s-litres').textContent=l>=1e6?(l/1e6).toFixed(1)+'M':l>=1000?(l/1000).toFixed(0)+'K':l;
-    document.getElementById('s-pending').textContent=r.byStatus.pending;
-    document.getElementById('recent-rows').innerHTML=(r.recentBookings||[]).map(function(b){return '<tr><td class="bid">'+b.id+'</td><td>'+b.destination+'</td><td>'+fv(b.volumeLitres)+'</td><td><span class="badge '+pc(b.priority)+'">'+b.priority+'</span></td><td><span class="badge '+sc(b.status)+'">'+b.status+'</span></td><td style="color:var(--muted);font-size:.8rem">'+b.createdAt.slice(0,10)+'</td></tr>';}).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">No bookings yet.</td></tr>';
-    var total=r.totalBookings||1;
-    document.getElementById('status-bars').innerHTML=Object.entries(r.byStatus).map(function(e){return '<div class="bar-item"><div class="bar-head"><span style="color:var(--ice);text-transform:capitalize">'+e[0]+'</span><span style="color:var(--glow)">'+e[1]+'</span></div><div class="bar-track"><div class="bar-fill" style="width:'+(e[1]/total*100)+'%"></div></div></div>';}).join('');
-  } else {
-    var r=await api('GET','/bookings');
-    document.getElementById('s-total').textContent=r.total||0;
-    document.getElementById('s-users').textContent='—';
-    var tl=(r.bookings||[]).reduce(function(s,b){return s+b.volumeLitres;},0);
-    document.getElementById('s-litres').textContent=tl>=1e6?(tl/1e6).toFixed(1)+'M':tl>=1000?(tl/1000).toFixed(0)+'K':tl;
-    document.getElementById('s-pending').textContent=(r.bookings||[]).filter(function(b){return b.status==='pending';}).length;
-    document.getElementById('recent-rows').innerHTML=(r.bookings||[]).slice(0,5).map(function(b){return '<tr><td class="bid">'+b.id+'</td><td>'+b.destination+'</td><td>'+fv(b.volumeLitres)+'</td><td><span class="badge '+pc(b.priority)+'">'+b.priority+'</span></td><td><span class="badge '+sc(b.status)+'">'+b.status+'</span></td><td style="color:var(--muted);font-size:.8rem">'+b.createdAt.slice(0,10)+'</td></tr>';}).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">No bookings yet.</td></tr>';
-  }
+// ── ADMIN DASHBOARD ───────────────────────────────────
+async function loadAdminDashboard() {
+  var r = await api('GET', '/stats'); if(r.error) return;
+  document.getElementById('a-bookings').textContent  = r.totalBookings;
+  document.getElementById('a-users').textContent     = r.totalUsers;
+  document.getElementById('a-approvals').textContent = r.pendingSuppliers||0;
+  document.getElementById('a-pending').textContent   = r.byStatus.pending;
+  document.getElementById('a-active').textContent    = r.byStatus.active;
+  document.getElementById('a-transit').textContent   = r.byStatus.transit;
+  document.getElementById('a-complete').textContent  = r.byStatus.complete;
+  // Revenue
+  var totalRev = r.totalRevenue||0;
+  document.getElementById('a-revenue').textContent = totalRev>=1000?(totalRev/1000).toFixed(0)+'K':totalRev;
+  // Recent bookings
+  document.getElementById('a-recent-rows').innerHTML = (r.recentBookings||[]).map(function(b){
+    return '<tr><td class="bid">'+b.id+'</td><td>'+b.destination+'</td><td>'+fv(b.volumeLitres)+'</td>'+
+    '<td><span class="badge '+pc(b.priority)+'">'+b.priority+'</span></td>'+
+    '<td><span class="badge '+sc(b.status)+'">'+b.status+'</span></td>'+
+    '<td>'+(b.paid?'<span style="color:var(--green);font-weight:600">✅ Paid</span>':'<span style="color:var(--muted)">Unpaid</span>')+'</td></tr>';
+  }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">No bookings yet.</td></tr>';
+  // Status bars
+  var total = r.totalBookings||1;
+  document.getElementById('a-status-bars').innerHTML = Object.entries(r.byStatus).map(function(e){
+    return '<div class="bar-item"><div class="bar-head"><span style="color:var(--ice);text-transform:capitalize">'+e[0]+'</span><span style="color:var(--glow)">'+e[1]+'</span></div><div class="bar-track"><div class="bar-fill" style="width:'+(e[1]/total*100)+'%"></div></div></div>';
+  }).join('');
+}
+
+// ── ADMIN BOOKINGS ────────────────────────────────────
+async function loadAdminBookings() {
+  var search=document.getElementById('ab-search')?document.getElementById('ab-search').value:'';
+  var status=document.getElementById('ab-status')?document.getElementById('ab-status').value:'all';
+  var r=await api('GET','/bookings?status='+status+(search?'&search='+encodeURIComponent(search):''));
+  var tbody=document.getElementById('ab-rows'), empty=document.getElementById('ab-empty');
+  if(!r.bookings||r.bookings.length===0){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  // Get users for customer names
+  var usersR = await api('GET','/users');
+  var users = (usersR.users||[]);
+  tbody.innerHTML=r.bookings.map(function(b){
+    var customer = users.find(function(u){return u.id===b.userId;});
+    var custName = customer ? customer.name : 'Unknown';
+    return '<tr>'+
+      '<td class="bid">'+b.id+'</td>'+
+      '<td style="font-size:.82rem">'+custName+'</td>'+
+      '<td>'+b.destination+'</td>'+
+      '<td style="font-weight:600">'+fv(b.volumeLitres)+'</td>'+
+      '<td><span class="badge '+pc(b.priority)+'">'+b.priority+'</span></td>'+
+      '<td><select class="ssel" onchange="updStatus(this.dataset.id,this.value)" data-id="'+b.id+'">'+
+        '<option value="pending"'+(b.status==='pending'?' selected':'')+'>Pending</option>'+
+        '<option value="active"'+(b.status==='active'?' selected':'')+'>Active</option>'+
+        '<option value="transit"'+(b.status==='transit'?' selected':'')+'>In Transit</option>'+
+        '<option value="complete"'+(b.status==='complete'?' selected':'')+'>Complete</option>'+
+      '</select></td>'+
+      '<td>'+(b.paid?'<span style="color:var(--green);font-weight:600">✅ NGN '+(b.amountPaid||0).toLocaleString()+'</span>':'<span style="color:var(--muted)">Unpaid</span>')+'</td>'+
+      '<td style="color:var(--muted);font-size:.8rem">'+b.createdAt.slice(0,10)+'</td>'+
+      '<td><button class="btn btn-d" style="padding:5px 11px;font-size:.75rem" data-bid="'+b.id+'" onclick="cancelB(this.dataset.bid)">Cancel</button></td>'+
+    '</tr>';
+  }).join('');
+}
+
+// ── ADMIN SUPPLIERS ───────────────────────────────────
+async function loadAdminSuppliers() {
+  var r = await api('GET', '/suppliers');
+  var suppliers = r.suppliers||[];
+  var pending  = suppliers.filter(function(s){return s.status!=='verified';});
+  var verified = suppliers.filter(function(s){return s.status==='verified';});
+  document.getElementById('sup-pending-count').textContent  = pending.length;
+  document.getElementById('sup-verified-count').textContent = verified.length;
+  var tbody = document.getElementById('sup-mgmt-rows');
+  var empty  = document.getElementById('sup-mgmt-empty');
+  if(suppliers.length===0){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  tbody.innerHTML = suppliers.map(function(s){
+    var isVerified = s.status==='verified';
+    return '<tr>'+
+      '<td style="font-weight:600">'+s.name+'</td>'+
+      '<td>'+s.organization+'</td>'+
+      '<td>'+s.country+'</td>'+
+      '<td style="color:var(--muted)">'+s.waterTypes+'</td>'+
+      '<td style="font-size:.82rem;color:var(--muted)">'+s.regions+'</td>'+
+      '<td><span class="badge '+(isVerified?'b-active':'b-pending')+'">'+(isVerified?'✅ Verified':'⏳ Pending')+'</span></td>'+
+      '<td>'+
+        (isVerified
+          ? '<button class="btn btn-d" style="padding:5px 11px;font-size:.75rem" data-sid="'+s.id+'" onclick="rejectSupplier(this.dataset.sid)">Revoke</button>'
+          : '<button class="btn btn-p" style="padding:5px 11px;font-size:.75rem;margin-right:4px" data-sid="'+s.id+'" onclick="approveSupplier(this.dataset.sid)">✅ Approve</button>'+
+            '<button class="btn btn-d" style="padding:5px 11px;font-size:.75rem" data-sid="'+s.id+'" onclick="rejectSupplier(this.dataset.sid)">❌ Reject</button>'
+        )+
+      '</td></tr>';
+  }).join('');
+}
+
+async function approveSupplier(id) {
+  var r = await api('PUT', '/suppliers/'+id+'/status', { status: 'verified' });
+  if(r.error){toast('❌',r.error);return;}
+  toast('✅','Supplier approved! They will receive an email notification.');
+  loadAdminSuppliers();
+}
+async function rejectSupplier(id) {
+  if(!confirm('Revoke/reject this supplier?')) return;
+  var r = await api('PUT', '/suppliers/'+id+'/status', { status: 'rejected' });
+  if(r.error){toast('❌',r.error);return;}
+  toast('🗑️','Supplier status updated.');
+  loadAdminSuppliers();
+}
+
+// ── ADMIN USERS ───────────────────────────────────────
+async function loadAdminUsers() {
+  var r = await api('GET','/users'); var note=document.getElementById('u-note');
+  if(r.error){if(note)note.style.display='block';return;}
+  document.getElementById('admin-user-rows').innerHTML=(r.users||[]).map(function(u){
+    var badge = u.userType==='supplier'?'b-supplier':u.role==='admin'?'b-crit':u.role==='ngo'?'b-transit':'b-pending';
+    return '<tr>'+
+      '<td style="font-weight:600">'+u.name+'</td>'+
+      '<td style="color:var(--muted)">'+u.email+'</td>'+
+      '<td><span class="badge '+badge+'">'+(u.userType||u.role)+'</span></td>'+
+      '<td>'+(u.organization||'—')+'</td>'+
+      '<td>'+(u.country||'—')+'</td>'+
+      '<td><span class="badge b-pending">'+u.role+'</span></td>'+
+      '<td style="color:var(--muted);font-size:.8rem">'+u.createdAt.slice(0,10)+'</td></tr>';
+  }).join('');
+}
+
+// ── ADMIN REVENUE ─────────────────────────────────────
+async function loadAdminRevenue() {
+  var r = await api('GET', '/bookings?status=all');
+  var paid = (r.bookings||[]).filter(function(b){return b.paid;});
+  var total = paid.reduce(function(s,b){return s+(b.amountPaid||0);},0);
+  var commission = total * 0.15;
+  var payout = total * 0.85;
+  document.getElementById('rev-total').textContent      = total>=1000?(total/1000).toFixed(1)+'K':total;
+  document.getElementById('rev-commission').textContent = commission>=1000?(commission/1000).toFixed(1)+'K':Math.round(commission);
+  document.getElementById('rev-payout').textContent     = payout>=1000?(payout/1000).toFixed(1)+'K':Math.round(payout);
+  document.getElementById('rev-count').textContent      = paid.length;
+  var tbody = document.getElementById('rev-rows');
+  var empty  = document.getElementById('rev-empty');
+  if(paid.length===0){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  var usersR = await api('GET','/users');
+  var users = (usersR.users||[]);
+  tbody.innerHTML = paid.map(function(b){
+    var customer = users.find(function(u){return u.id===b.userId;});
+    var amt = b.amountPaid||0;
+    return '<tr>'+
+      '<td class="bid">'+b.id+'</td>'+
+      '<td style="font-size:.82rem">'+(customer?customer.name:'Unknown')+'</td>'+
+      '<td>'+b.destination+'</td>'+
+      '<td style="color:var(--green);font-weight:600">'+amt.toLocaleString()+'</td>'+
+      '<td style="color:var(--glow)">'+Math.round(amt*0.15).toLocaleString()+'</td>'+
+      '<td style="color:var(--muted)">'+Math.round(amt*0.85).toLocaleString()+'</td>'+
+      '<td style="color:var(--muted);font-size:.8rem">'+(b.paidAt||b.createdAt).slice(0,10)+'</td>'+
+    '</tr>';
+  }).join('');
+}
+
+// ── CONSUMER DASHBOARD ────────────────────────────────
+async function loadConsumerDashboard() {
+  var r = await api('GET','/bookings');
+  var bookings = r.bookings||[];
+  document.getElementById('s-total').textContent    = bookings.length;
+  document.getElementById('s-pending').textContent  = bookings.filter(function(b){return b.status==='pending';}).length;
+  document.getElementById('s-complete').textContent = bookings.filter(function(b){return b.status==='complete';}).length;
+  var tl = bookings.reduce(function(s,b){return s+b.volumeLitres;},0);
+  document.getElementById('s-litres').textContent = tl>=1e6?(tl/1e6).toFixed(1)+'M':tl>=1000?(tl/1000).toFixed(0)+'K':tl;
+  document.getElementById('recent-rows').innerHTML = bookings.slice(0,5).map(function(b){
+    return '<tr><td class="bid">'+b.id+'</td><td>'+b.destination+'</td><td>'+fv(b.volumeLitres)+'</td>'+
+    '<td><span class="badge '+sc(b.status)+'">'+b.status+'</span></td>'+
+    '<td>'+(b.paid?'<span style="color:var(--green)">✅</span>':'<span style="color:var(--muted)">—</span>')+'</td></tr>';
+  }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">No bookings yet. <a href="#" onclick="goPage('book')" style="color:var(--glow)">Book your first →</a></td></tr>';
 }
 
 // ── BOOKINGS ──────────────────────────────────────────
 async function loadBookings() {
-  var search=document.getElementById('f-search').value, status=document.getElementById('f-status').value;
+  var search=document.getElementById('f-search')?document.getElementById('f-search').value:'';
+  var status=document.getElementById('f-status')?document.getElementById('f-status').value:'all';
   var r=await api('GET','/bookings?status='+status+(search?'&search='+encodeURIComponent(search):''));
   var tbody=document.getElementById('bk-rows'), empty=document.getElementById('bk-empty');
-  if(!r.bookings||r.bookings.length===0){
-    tbody.innerHTML='';
-    empty.style.display='block';
-    document.getElementById('bk-msg').innerHTML='No bookings yet.';
-    return;
-  }
+  if(!r.bookings||r.bookings.length===0){tbody.innerHTML='';empty.style.display='block';document.getElementById('bk-msg').innerHTML='No bookings yet. <a href="#" onclick="goPage('book')" style="color:var(--glow)">Make your first booking →</a>';return;}
   empty.style.display='none';
-  var rows = '';
-  for(var i=0;i<r.bookings.length;i++){
-    var b = r.bookings[i];
-    var statusCell = '';
-    if(ME && ME.role==='admin'){
-      statusCell = '<select class="ssel" onchange="updStatus(this.dataset.id,this.value)" data-id="'+b.id+'">';
-      statusCell += '<option value="pending"'+(b.status==='pending'?' selected':'')+'>Pending</option>';
-      statusCell += '<option value="active"'+(b.status==='active'?' selected':'')+'>Active</option>';
-      statusCell += '<option value="transit"'+(b.status==='transit'?' selected':'')+'>In Transit</option>';
-      statusCell += '<option value="complete"'+(b.status==='complete'?' selected':'')+'>Complete</option>';
-      statusCell += '</select>';
-    } else {
-      statusCell = '<span class="badge '+sc(b.status)+'">'+b.status+'</span>';
-    }
+  tbody.innerHTML=r.bookings.map(function(b){
     var payCell = b.paid
-      ? '<span style="color:var(--green);font-size:.78rem;font-weight:600">&#10003; Paid</span>'
-      : '<button class="btn btn-p" style="padding:5px 11px;font-size:.75rem;margin-right:4px" data-bid="'+b.id+'" data-vol="'+b.volumeLitres+'" onclick="payBooking(this.dataset.bid,parseInt(this.dataset.vol))">Pay</button>';
-    var cancelCell = '<button class="btn btn-d" style="padding:5px 11px;font-size:.75rem" data-bid="'+b.id+'" onclick="cancelB(this.dataset.bid)">Cancel</button>';
-    rows += '<tr>';
-    rows += '<td class="bid">'+b.id+'</td>';
-    rows += '<td>'+b.destination+'</td>';
-    rows += '<td style="color:var(--muted)">'+b.waterType+'</td>';
-    rows += '<td style="font-weight:600">'+fv(b.volumeLitres)+'</td>';
-    rows += '<td><span class="badge '+pc(b.priority)+'">'+b.priority+'</span></td>';
-    rows += '<td>'+statusCell+'</td>';
-    rows += '<td style="color:var(--muted);font-size:.8rem">'+b.createdAt.slice(0,10)+'</td>';
-    rows += '<td>'+payCell+' '+cancelCell+'</td>';
-    rows += '</tr>';
-  }
-  tbody.innerHTML = rows;
+      ? '<span style="color:var(--green);font-size:.78rem;font-weight:600">✅ Paid</span>'
+      : '<button class="btn btn-p" style="padding:5px 11px;font-size:.75rem" data-bid="'+b.id+'" data-vol="'+b.volumeLitres+'" onclick="payBooking(this.dataset.bid,parseInt(this.dataset.vol))">Pay</button>';
+    return '<tr>'+
+      '<td class="bid">'+b.id+'</td><td>'+b.destination+'</td>'+
+      '<td style="color:var(--muted)">'+b.waterType+'</td>'+
+      '<td style="font-weight:600">'+fv(b.volumeLitres)+'</td>'+
+      '<td><span class="badge '+pc(b.priority)+'">'+b.priority+'</span></td>'+
+      '<td><span class="badge '+sc(b.status)+'">'+b.status+'</span></td>'+
+      '<td>'+payCell+'</td>'+
+      '<td style="color:var(--muted);font-size:.8rem">'+b.createdAt.slice(0,10)+'</td>'+
+      '<td><button class="btn btn-d" style="padding:5px 11px;font-size:.75rem" data-bid="'+b.id+'" onclick="cancelB(this.dataset.bid)">Cancel</button></td>'+
+    '</tr>';
+  }).join('');
 }
+
 async function updStatus(id,status){
   var r=await api('PUT','/bookings/'+id+'/status',{status:status});
   if(r.error){toast('❌',r.error);return;}
@@ -1314,13 +1593,70 @@ async function cancelB(id){
   if(!confirm('Cancel booking '+id+'?'))return;
   var r=await api('DELETE','/bookings/'+id);
   if(r.error){toast('❌',r.error);return;}
-  toast('🗑️','Cancelled.');
-  loadBookings();
+  toast('🗑️','Cancelled.'); loadBookings();
+}
+
+// ── SUPPLIERS ─────────────────────────────────────────
+async function loadSuppliers(){
+  var r=await api('GET','/suppliers');
+  var verified = (r.suppliers||[]).filter(function(s){return s.status==='verified';});
+  var tbody=document.getElementById('supplier-rows'), empty=document.getElementById('supplier-empty');
+  if(verified.length===0){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  tbody.innerHTML=verified.map(function(s){
+    return '<tr>'+
+      '<td style="font-weight:600">'+s.name+'</td>'+
+      '<td>'+s.country+'</td>'+
+      '<td style="color:var(--muted)">'+s.waterTypes+'</td>'+
+      '<td style="font-size:.82rem;color:var(--muted)">'+s.regions+'</td>'+
+      '<td><span class="badge b-active">✅ Verified</span></td></tr>';
+  }).join('');
+}
+
+// ── SUPPLIER DASHBOARD ────────────────────────────────
+async function loadSupplierDash() {
+  // Check supplier status
+  var supR = await api('GET','/suppliers');
+  var mySup = (supR.suppliers||[]).find(function(s){return s.id===ME.id;});
+  var isVerified = mySup && mySup.status==='verified';
+  document.getElementById('sup-status-banner').style.display  = !isVerified ? 'block' : 'none';
+  document.getElementById('sup-verified-banner').style.display = isVerified  ? 'block' : 'none';
+
+  var r = await api('GET','/bookings?status=all');
+  var all = r.bookings||[];
+  var available  = all.filter(function(b){return b.paid && b.status!=='complete';});
+  var completed  = all.filter(function(b){return b.status==='complete';});
+  var pendingPay = available.filter(function(b){return b.status==='active';});
+  var earned     = completed.reduce(function(s,b){return s+((b.amountPaid||0)*0.85);},0);
+
+  document.getElementById('sup-available').textContent  = available.length;
+  document.getElementById('sup-deliveries').textContent = completed.length;
+  document.getElementById('sup-pending-pay').textContent= pendingPay.length;
+  document.getElementById('sup-earned').textContent     = 'NGN '+Math.round(earned).toLocaleString();
+
+  var tbody=document.getElementById('sup-booking-rows'), empty=document.getElementById('sup-empty');
+  if(available.length===0){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  tbody.innerHTML=available.map(function(b){
+    var payout = Math.round((b.amountPaid||0)*0.85);
+    var priColor=b.priority==='Emergency'?'var(--coral)':b.priority==='Urgent'?'var(--gold)':'var(--muted)';
+    return '<tr>'+
+      '<td class="bid">'+b.id+'</td>'+
+      '<td>'+b.destination+'</td>'+
+      '<td style="color:var(--muted)">'+b.waterType+'</td>'+
+      '<td style="font-weight:600">'+fv(b.volumeLitres)+'</td>'+
+      '<td style="color:'+priColor+';font-weight:600">'+b.priority+'</td>'+
+      '<td style="color:var(--muted)">'+b.estimatedDelivery+'</td>'+
+      '<td style="color:var(--green);font-weight:600">NGN '+payout.toLocaleString()+'</td>'+
+      '<td><a href="mailto:aqualink79@gmail.com?subject=Accept Order '+b.id+'&body=I want to accept booking '+b.id+' for '+b.destination+'" style="display:inline-block;padding:5px 12px;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.2);border-radius:8px;color:var(--glow);text-decoration:none;font-size:.78rem;font-weight:600">Accept</a></td>'+
+    '</tr>';
+  }).join('');
 }
 
 // ── BOOK WATER ────────────────────────────────────────
 function pickPill(el){el.closest('.pills').querySelectorAll('.pill').forEach(function(p){p.classList.remove('on');});el.classList.add('on');}
 function updVol(v){var n=parseInt(v);document.getElementById('vol-disp').textContent=n>=1e6?(n/1e6).toFixed(1)+'M L':n>=1000?(n/1000).toFixed(0)+'K L':n+' L';}
+
 async function submitBook(){
   document.getElementById('b-err').style.display='none';
   var country=document.getElementById('b-country').value;
@@ -1334,82 +1670,81 @@ async function submitBook(){
   document.getElementById('book-success').style.display='block';
   document.getElementById('s-id').textContent=r.booking.id;
   document.getElementById('s-msg').textContent=r.message;
-  currentBookingId = r.booking.id;
-  currentBookingVol = r.booking.volumeLitres;
-  var amountNaira = (r.booking.volumeLitres * PRICE_PER_LITRE_KOBO / 100).toLocaleString();
-  document.getElementById('pay-amount').textContent = 'NGN ' + amountNaira;
+  currentBookingId=r.booking.id;
+  currentBookingVol=r.booking.volumeLitres;
+  var amtNaira=(r.booking.volumeLitres*PRICE_PER_LITRE_KOBO/100).toLocaleString();
+  document.getElementById('pay-amount').textContent='NGN '+amtNaira;
   toast('✅','Booking '+r.booking.id+' confirmed!');
 }
-function resetBook(){document.getElementById('book-success').style.display='none';document.getElementById('book-form').style.display='block';['b-country','b-city','b-notes'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('vol-slide').value=5000;document.getElementById('vol-disp').textContent='5,000 L';}
 
-// ── SUPPLIERS ─────────────────────────────────────────
-async function loadSuppliers(){
-  var r=await api('GET','/suppliers');
-  var tbody=document.getElementById('supplier-rows'), empty=document.getElementById('supplier-empty');
-  if(!r.suppliers||r.suppliers.length===0){tbody.innerHTML='';empty.style.display='block';return;}
-  empty.style.display='none';
-  tbody.innerHTML=r.suppliers.map(function(s){return '<tr><td style="font-weight:600">'+s.name+'</td><td>'+s.organization+'</td><td>'+s.country+'</td><td style="color:var(--muted)">'+(s.waterTypes||'Potable')+'</td><td style="font-size:.82rem;color:var(--muted)">'+(s.regions||s.country)+'</td><td><span class="badge b-supplier">Verified</span></td></tr>';}).join('');
+function resetBook(){
+  document.getElementById('book-success').style.display='none';
+  document.getElementById('book-form').style.display='block';
+  ['b-country','b-city','b-notes'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('vol-slide').value=5000;
+  document.getElementById('vol-disp').textContent='5,000 L';
 }
 
-// ── GROWTH ────────────────────────────────────────────
-async function loadGrowth(){
-  var r=await api('GET','/stats'); if(r.error) return;
-  document.getElementById('g-bookings').textContent=r.totalBookings;
-  document.getElementById('g-users').textContent=r.totalUsers;
-  document.getElementById('g-suppliers').textContent=r.totalSuppliers||0;
-  var l=r.totalLitres; document.getElementById('g-litres').textContent=l>=1e6?(l/1e6).toFixed(1)+'M':l>=1000?(l/1000).toFixed(0)+'K':l;
-  document.getElementById('g-emergency').textContent=r.byPriority.Emergency||0;
-  document.getElementById('g-complete').textContent=r.byStatus.complete||0;
-  // Top destinations
-  var dest={}; (r.allBookings||[]).forEach(function(b){dest[b.destination]=(dest[b.destination]||0)+1;});
-  var sorted=Object.entries(dest).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
-  var max=sorted[0]?sorted[0][1]:1;
-  document.getElementById('top-destinations').innerHTML=sorted.length?sorted.map(function(e){return '<div class="bar-item"><div class="bar-head"><span style="color:var(--ice)">'+e[0]+'</span><span style="color:var(--glow)">'+e[1]+' booking'+(e[1]>1?'s':'')+'</span></div><div class="bar-track"><div class="bar-fill" style="width:'+(e[1]/max*100)+'%"></div></div></div>';}).join(''):'<p style="color:var(--muted);font-size:.85rem">No bookings yet.</p>';
+// ── PAYMENT ───────────────────────────────────────────
+async function getPaystackKey(){
+  if(paystackKey) return paystackKey;
+  var r=await api('GET','/paystack-key');
+  paystackKey=r.publicKey||''; return paystackKey;
 }
 
-// ── SUPPLIER DASHBOARD ───────────────────────────────
-async function loadSupplierDash() {
-  var r = await api('GET', '/bookings?status=all');
-  var allBookings = r.bookings || [];
-  // Show paid bookings available for suppliers
-  var available = allBookings.filter(function(b){ return b.paid && b.status !== 'complete'; });
-  var completed  = allBookings.filter(function(b){ return b.status === 'complete' && b.userId === (ME && ME.id); }).length;
-  document.getElementById('sup-available').textContent  = available.length;
-  document.getElementById('sup-deliveries').textContent = allBookings.filter(function(b){ return b.status==='complete'; }).length;
-  document.getElementById('sup-pending-pay').textContent = available.filter(function(b){ return b.paid && b.status!=='complete'; }).length;
-  var totalEarned = allBookings.filter(function(b){ return b.status==='complete' && b.paid; }).reduce(function(s,b){ return s + ((b.amountPaid||0) * 0.85); }, 0);
-  document.getElementById('sup-earned').textContent = totalEarned > 0 ? 'NGN ' + Math.round(totalEarned).toLocaleString() : 'NGN 0';
-  var tbody = document.getElementById('sup-booking-rows');
-  var empty  = document.getElementById('sup-empty');
-  if (available.length === 0) {
-    tbody.innerHTML = '';
-    empty.style.display = 'block';
-    return;
-  }
-  empty.style.display = 'none';
-  tbody.innerHTML = available.map(function(b) {
-    var priColor = b.priority==='Emergency'?'var(--coral)':b.priority==='Urgent'?'var(--gold)':'var(--muted)';
-    return '<tr>' +
-      '<td class="bid">' + b.id + '</td>' +
-      '<td>' + b.destination + '</td>' +
-      '<td style="color:var(--muted)">' + b.waterType + '</td>' +
-      '<td style="font-weight:600">' + fv(b.volumeLitres) + '</td>' +
-      '<td style="color:' + priColor + ';font-weight:600">' + b.priority + '</td>' +
-      '<td style="color:var(--muted)">' + (b.estimatedDelivery||'TBD') + '</td>' +
-      '<td><a href="mailto:aqualink79@gmail.com?subject=Accept Order ' + b.id + '&body=I want to accept booking ' + b.id + ' for ' + b.destination + '" style="display:inline-block;padding:5px 12px;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.2);border-radius:8px;color:var(--glow);text-decoration:none;font-size:.78rem;font-weight:600">Accept Order</a></td>' +
-      '</tr>';
-  }).join('');
+function loadPaystackScript(callback){
+  if(window.PaystackPop){callback();return;}
+  var s=document.createElement('script');
+  s.src='https://js.paystack.co/v1/inline.js';
+  s.onload=function(){callback();};
+  s.onerror=function(){toast('❌','Could not load payment system.');};
+  document.head.appendChild(s);
 }
 
-// ── USERS ─────────────────────────────────────────────
-async function loadUsers(){
-  var r=await api('GET','/users'); var note=document.getElementById('u-note');
-  if(r.error){note.style.display='block';return;} note.style.display='none';
-  document.getElementById('user-rows').innerHTML=(r.users||[]).map(function(u){
-    var badge=u.userType==='supplier'?'b-supplier':u.role==='admin'?'b-crit':u.role==='ngo'?'b-transit':'b-pending';
-    return '<tr><td style="font-weight:600">'+u.name+'</td><td style="color:var(--muted)">'+u.email+'</td><td><span class="badge '+badge+'">'+(u.userType||u.role)+'</span></td><td>'+(u.organization||'—')+'</td><td>'+(u.country||'—')+'</td><td><span class="badge b-pending">'+u.role+'</span></td><td style="color:var(--muted);font-size:.8rem">'+u.createdAt.slice(0,10)+'</td></tr>';
-  }).join('');
+async function openPaystack(bookingId, volumeLitres){
+  if(!ME){toast('❌','Please log in first.');return;}
+  currentBookingId=bookingId;
+  currentBookingVol=parseInt(volumeLitres);
+  var amount=currentBookingVol*PRICE_PER_LITRE_KOBO;
+  if(amount<100) amount=100;
+  var ref='AQL'+Date.now();
+  toast('⏳','Opening payment...');
+  var r=await api('POST','/init-payment',{email:ME.email,amount:amount,reference:ref,bookingId:bookingId});
+  if(r.error){toast('❌',r.error);return;}
+  var popupWidth=520,popupHeight=620;
+  var left=(window.screen.width-popupWidth)/2,top=(window.screen.height-popupHeight)/2;
+  var popup=window.open(r.url,'AquaLink Payment','width='+popupWidth+',height='+popupHeight+',left='+left+',top='+top+',scrollbars=yes');
+  if(!popup||popup.closed){toast('ℹ️','Redirecting to payment...');window.location.href=r.url;return;}
+  toast('💳','Complete your payment in the popup!');
+  var checkInterval=setInterval(function(){
+    if(popup.closed){
+      clearInterval(checkInterval);
+      toast('⏳','Verifying payment...');
+      api('POST','/verify-payment',{reference:r.reference||ref,bookingId:bookingId}).then(function(vr){
+        if(vr.success){toast('✅','Payment confirmed! Your booking is now active.');loadBookings();}
+        else{toast('ℹ️','Payment not completed. You can pay anytime.');loadBookings();}
+      });
+    }
+  },1500);
 }
+
+async function payNow(){await openPaystack(currentBookingId,currentBookingVol);}
+async function payBooking(bookingId,volumeLitres){await openPaystack(bookingId,parseInt(volumeLitres));}
+
+// ── CONTACT ───────────────────────────────────────────
+async function sendContact(){
+  var name=document.getElementById('c-name').value.trim(), email=document.getElementById('c-email').value.trim(), subject=document.getElementById('c-subject').value, msg=document.getElementById('c-msg').value.trim();
+  var result=document.getElementById('c-result');
+  if(!name||!email||!msg){result.style.display='block';result.style.color='var(--coral)';result.textContent='Please fill in all fields.';return;}
+  result.style.display='block';result.style.color='var(--muted)';result.textContent='Sending...';
+  var r=await api('POST','/contact',{name:name,email:email,subject:subject,message:msg});
+  if(r.success){result.style.color='var(--green)';result.textContent='✅ Message sent! We will reply within 24 hours.';document.getElementById('c-name').value='';document.getElementById('c-email').value='';document.getElementById('c-msg').value='';}
+  else{result.style.color='var(--coral)';result.textContent='❌ Failed. Please email aqualink79@gmail.com directly.';}
+}
+
+// ── LEGAL MODALS ─────────────────────────────────────
+function openModal(id){document.getElementById(id).style.display='block';document.body.style.overflow='hidden';}
+function closeModal(id){document.getElementById(id).style.display='none';document.body.style.overflow='';}
 
 // ── UTILS ─────────────────────────────────────────────
 function fv(l){return l>=1e6?(l/1e6).toFixed(1)+'M L':l>=1000?(l/1000).toFixed(0)+'K L':l+' L';}
@@ -1417,164 +1752,31 @@ function pc(p){return p==='Emergency'?'b-crit':p==='Urgent'?'b-pending':'b-compl
 function sc(s){return s==='active'?'b-active':s==='pending'?'b-pending':s==='transit'?'b-transit':'b-complete';}
 function toast(ico,msg){document.getElementById('t-i').textContent=ico;document.getElementById('t-m').textContent=msg;var t=document.getElementById('toast');t.classList.add('show');setTimeout(function(){t.classList.remove('show');},4000);}
 
+// ── LANDING STATS ─────────────────────────────────────
+async function loadLandingStats(){
+  var r=await api('GET','/public-stats'); if(r.error) return;
+  animCount('land-bookings',r.totalBookings);
+  animCount('land-users',r.totalUsers);
+  var l=r.totalLitres; document.getElementById('land-litres').textContent=l>=1e6?(l/1e6).toFixed(1)+'M':l>=1000?(l/1000).toFixed(0)+'K':l||'0';
+  animCount('land-suppliers',r.totalSuppliers);
+}
+function animCount(id,target){
+  var el=document.getElementById(id); if(!el||!target) return;
+  var start=performance.now(),dur=1500;
+  (function tick(now){var p=Math.min((now-start)/dur,1),v=Math.round(target*(1-Math.pow(1-p,3)));el.textContent=v.toLocaleString();if(p<1)requestAnimationFrame(tick);else el.textContent=target.toLocaleString();})(start);
+}
+
 // ── BOOT ──────────────────────────────────────────────
-// ── PAYMENT ───────────────────────────────────────────
-var currentBookingId = null;
-var currentBookingVol = 0;
-var paystackKey = '';
-
-// Price per litre in Kobo (NGN)
-var PRICE_PER_LITRE_KOBO = 10;
-
-async function getPaystackKey() {
-  if (paystackKey) return paystackKey;
-  var r = await api('GET', '/paystack-key');
-  paystackKey = r.publicKey || '';
-  return paystackKey;
-}
-
-async function openPaystack(bookingId, volumeLitres) {
-  if (!ME) { toast('❌', 'Please log in first.'); return; }
-  currentBookingId = bookingId;
-  currentBookingVol = parseInt(volumeLitres);
-  var amount = currentBookingVol * PRICE_PER_LITRE_KOBO;
-  if (amount < 100) amount = 100;
-  var ref = 'AQL' + Date.now();
-
-  toast('⏳', 'Opening payment...');
-
-  // Initialize payment via server
-  var r = await api('POST', '/init-payment', {
-    email: ME.email,
-    amount: amount,
-    reference: ref,
-    bookingId: bookingId
-  });
-
-  if (r.error) { toast('❌', r.error); return; }
-
-  // Open Paystack checkout in popup
-  var popupWidth = 520;
-  var popupHeight = 620;
-  var left = (window.screen.width - popupWidth) / 2;
-  var top = (window.screen.height - popupHeight) / 2;
-  var popup = window.open(
-    r.url,
-    'AquaLink Payment',
-    'width=' + popupWidth + ',height=' + popupHeight + ',left=' + left + ',top=' + top + ',scrollbars=yes'
-  );
-
-  if (!popup || popup.closed) {
-    // Popup blocked — redirect instead
-    toast('ℹ️', 'Redirecting to payment page...');
-    window.location.href = r.url;
-    return;
-  }
-
-  toast('💳', 'Complete your payment in the popup window!');
-
-  // Poll for popup close
-  var checkInterval = setInterval(function() {
-    if (popup.closed) {
-      clearInterval(checkInterval);
-      // Verify payment
-      toast('⏳', 'Verifying payment...');
-      api('POST', '/verify-payment', {
-        reference: r.reference || ref,
-        bookingId: bookingId
-      }).then(function(vr) {
-        if (vr.success) {
-          toast('✅', 'Payment confirmed! Your booking is now active.');
-          loadBookings();
-        } else {
-          toast('ℹ️', 'Payment not completed. You can pay anytime from My Bookings.');
-          loadBookings();
-        }
-      });
-    }
-  }, 1500);
-}
-
-function verifyAndClear(ref, bookingId) {
-  toast('⏳', 'Verifying payment...');
-  api('POST', '/verify-payment', { reference: ref, bookingId: bookingId }).then(function(r) {
-    // Clear URL params
-    window.history.replaceState({}, document.title, window.location.pathname);
-    if (r.success) {
-      toast('✅', 'Payment confirmed! Your booking is now active.');
-      loadBookings();
-    } else {
-      toast('❌', r.error || 'Payment verification failed.');
-    }
-  });
-}
-
-async function payNow() {
-  await openPaystack(currentBookingId, currentBookingVol);
-}
-
-async function payBooking(bookingId, volumeLitres) {
-  await openPaystack(bookingId, parseInt(volumeLitres));
-}
-
-// Check for payment return on page load
-(function checkPaymentReturn() {
-  var urlParams = new URLSearchParams(window.location.search);
-  var payref = urlParams.get('payref');
-  var booking = urlParams.get('booking');
-  if (payref && booking) {
-    verifyAndClear(payref, booking);
-  }
-})();
-
-// ── CONTACT FORM ─────────────────────────────────────
-async function sendContact() {
-  var name    = document.getElementById('c-name').value.trim();
-  var email   = document.getElementById('c-email').value.trim();
-  var subject = document.getElementById('c-subject').value;
-  var msg     = document.getElementById('c-msg').value.trim();
-  var result  = document.getElementById('c-result');
-  if (!name || !email || !msg) {
-    result.style.display = 'block';
-    result.style.color = 'var(--coral)';
-    result.textContent = 'Please fill in all fields.';
-    return;
-  }
-  result.style.display = 'block';
-  result.style.color = 'var(--muted)';
-  result.textContent = 'Sending...';
-  var r = await api('POST', '/contact', { name: name, email: email, subject: subject, message: msg });
-  if (r.success) {
-    result.style.color = 'var(--green)';
-    result.textContent = '✅ Message sent! We will reply within 24 hours.';
-    document.getElementById('c-name').value = '';
-    document.getElementById('c-email').value = '';
-    document.getElementById('c-msg').value = '';
-  } else {
-    result.style.color = 'var(--coral)';
-    result.textContent = '❌ Failed to send. Please email us directly at aqualink79@gmail.com';
-  }
-}
-
-// ── LEGAL MODALS ─────────────────────────────────────
-function openModal(id) {
-  document.getElementById(id).style.display = 'block';
-  document.body.style.overflow = 'hidden';
-}
-function closeModal(id) {
-  document.getElementById(id).style.display = 'none';
-  document.body.style.overflow = '';
-}
-
 loadLandingStats();
 (async function boot(){
   if(TOKEN){var r=await api('GET','/me');if(!r.error){ME=r.user;startApp();return;}localStorage.removeItem('aq_token');TOKEN=null;}
 })();
+
 </script>
 </body>
 </html>`;
 
-// ─── SERVER ───────────────────────────────────────────
+// ─── START SERVER ─────────────────────────────────────
 seedData();
 
 http.createServer(async function(req, res) {
@@ -1591,16 +1793,80 @@ http.createServer(async function(req, res) {
 
   var route = rawUrl.replace('/api','') || '/';
 
-  // GET /api/public-stats (no auth needed — for landing page)
+  // POST /api/contact
+  if (route === '/contact' && method === 'POST') {
+    var data = await getBody(req);
+    if (!data.name||!data.email||!data.message) return sendJSON(res,400,{error:'All fields required.'});
+    var html = emailWrap('<h2>📩 New Contact Message</h2><table><tr><td>From</td><td>'+data.name+'</td></tr><tr><td>Email</td><td>'+data.email+'</td></tr><tr><td>Subject</td><td>'+data.subject+'</td></tr></table><div style="margin-top:20px;padding:16px;background:#f8fafb;border-radius:10px;color:#333;font-size:.9rem;line-height:1.7">'+data.message+'</div><p style="margin-top:16px;font-size:.82rem;color:#4a7a9b">Reply to: <a href="mailto:'+data.email+'">'+data.email+'</a></p>');
+    await sendEmail(ADMIN_EMAIL,'📩 AquaLink Contact: '+data.subject+' — '+data.name, html);
+    var replyHtml = emailWrap('<h2>✅ Message Received!</h2><p>Thank you for contacting AquaLink, <strong>'+data.name+'</strong>! We will respond within 24 hours.</p><p style="margin-top:12px;color:#4a7a9b;font-size:.85rem">For urgent matters: aqualink79@gmail.com</p>');
+    sendEmail(data.email,'✅ AquaLink — We received your message!', replyHtml);
+    return sendJSON(res,200,{success:true});
+  }
+
+  // GET /api/public-stats
   if (route === '/public-stats' && method === 'GET') {
     var db = loadDB();
-    var suppliers = (db.users||[]).filter(function(u){ return u.userType === 'supplier'; });
-    return sendJSON(res, 200, {
-      totalBookings: db.bookings.length,
-      totalUsers: db.users.length,
-      totalLitres: db.bookings.reduce(function(s,b){ return s+(b.volumeLitres||0); }, 0),
-      totalSuppliers: suppliers.length
+    var suppliers = (db.users||[]).filter(function(u){return u.userType==='supplier';});
+    return sendJSON(res,200,{
+      totalBookings:db.bookings.length, totalUsers:db.users.length,
+      totalLitres:db.bookings.reduce(function(s,b){return s+(b.volumeLitres||0);},0),
+      totalSuppliers:suppliers.length
     });
+  }
+
+  // GET /api/paystack-key
+  if (route === '/paystack-key' && method === 'GET') {
+    return sendJSON(res,200,{publicKey:PAYSTACK_PUBLIC});
+  }
+
+  // POST /api/init-payment
+  if (route === '/init-payment' && method === 'POST') {
+    var auth = checkToken(getToken(req));
+    if (!auth) return sendJSON(res,401,{error:'Please log in.'});
+    var data = await getBody(req);
+    var https = require('https');
+    var payload = JSON.stringify({email:data.email,amount:data.amount,reference:data.reference,currency:'NGN',metadata:{bookingId:data.bookingId}});
+    var result = await new Promise(function(resolve){
+      var options={hostname:'api.paystack.co',port:443,path:'/transaction/initialize',method:'POST',headers:{'Authorization':'Bearer '+PAYSTACK_SECRET,'Content-Type':'application/json','Content-Length':Buffer.byteLength(payload)}};
+      var req2=https.request(options,function(res2){var body='';res2.on('data',function(c){body+=c;});res2.on('end',function(){try{resolve(JSON.parse(body));}catch(e){resolve({status:false});}});});
+      req2.on('error',function(e){resolve({status:false,message:e.message});});
+      req2.write(payload);req2.end();
+    });
+    if(result.status&&result.data&&result.data.authorization_url){
+      return sendJSON(res,200,{url:result.data.authorization_url,reference:result.data.reference});
+    }
+    return sendJSON(res,400,{error:result.message||'Could not initialize payment.'});
+  }
+
+  // POST /api/verify-payment
+  if (route === '/verify-payment' && method === 'POST') {
+    var auth = checkToken(getToken(req));
+    if (!auth) return sendJSON(res,401,{error:'Please log in.'});
+    var data = await getBody(req);
+    if (!data.reference) return sendJSON(res,400,{error:'Payment reference required.'});
+    var https = require('https');
+    var verified = await new Promise(function(resolve){
+      var options={hostname:'api.paystack.co',port:443,path:'/transaction/verify/'+data.reference,method:'GET',headers:{'Authorization':'Bearer '+PAYSTACK_SECRET,'Content-Type':'application/json'}};
+      var req2=https.request(options,function(res2){var body='';res2.on('data',function(c){body+=c;});res2.on('end',function(){try{resolve(JSON.parse(body));}catch(e){resolve({status:false});}});});
+      req2.on('error',function(){resolve({status:false});});req2.end();
+    });
+    if(verified.status&&verified.data&&verified.data.status==='success'){
+      var db=loadDB();
+      var idx=db.bookings.findIndex(function(b){return b.id===data.bookingId;});
+      if(idx!==-1){
+        db.bookings[idx].paid=true;
+        db.bookings[idx].paymentRef=data.reference;
+        db.bookings[idx].amountPaid=verified.data.amount/100;
+        db.bookings[idx].currency=verified.data.currency;
+        db.bookings[idx].paidAt=new Date().toISOString();
+        saveDB(db);
+        var booker=db.users.find(function(u){return u.id===auth.id;});
+        if(booker) sendPaymentEmail(db.bookings[idx],booker.name,booker.email,verified.data.amount/100,verified.data.currency);
+      }
+      return sendJSON(res,200,{success:true,message:'Payment confirmed!',amount:verified.data.amount/100,currency:verified.data.currency});
+    }
+    return sendJSON(res,400,{error:'Payment verification failed.'});
   }
 
   // POST /api/register
@@ -1610,43 +1876,41 @@ http.createServer(async function(req, res) {
     if (data.password.length<6) return sendJSON(res,400,{error:'Password must be at least 6 characters.'});
     var db = loadDB();
     if (db.users.find(function(u){return u.email===data.email;})) return sendJSON(res,409,{error:'Email already registered. Please log in.'});
-    var user = { id:makeId(), name:data.name, email:data.email, passwordHash:hashPassword(data.password), role:data.role||'user', organization:data.organization||'', country:data.country||'', userType:data.userType||'consumer', createdAt:new Date().toISOString() };
+    var user={id:makeId(),name:data.name,email:data.email,passwordHash:hashPassword(data.password),role:data.role||'user',organization:data.organization||'',country:data.country||'',userType:data.userType||'consumer',createdAt:new Date().toISOString()};
     db.users.push(user);
-    // If supplier, add to suppliers list
-    if (data.userType === 'supplier') {
-      db.suppliers = db.suppliers || [];
-      db.suppliers.push({ id:user.id, name:user.name, organization:user.organization||user.name, country:user.country, waterTypes:data.supplierData&&data.supplierData.waterTypes||'Potable', capacity:data.supplierData&&data.supplierData.capacity||'', regions:data.supplierData&&data.supplierData.regions||user.country, createdAt:user.createdAt });
+    if (data.userType==='supplier') {
+      db.suppliers=db.suppliers||[];
+      db.suppliers.push({id:user.id,name:user.name,organization:user.organization||user.name,country:user.country,waterTypes:data.supplierData&&data.supplierData.waterTypes||'Potable',capacity:data.supplierData&&data.supplierData.capacity||'',regions:data.supplierData&&data.supplierData.regions||user.country,status:'pending',createdAt:user.createdAt});
     }
     saveDB(db);
-    var msg = data.userType==='supplier' ? 'Welcome! Your supplier application has been received. Our team will verify your account within 24 hours.' : 'Welcome to AquaLink, '+data.name+'! You can now book water.';
-    // Send welcome emails
+    var msg=data.userType==='supplier'?'Welcome! Your supplier application has been received. Our team will verify your account within 24 hours.':'Welcome to AquaLink, '+data.name+'! You can now book water.';
     sendWelcomeEmail(user);
-    return sendJSON(res,201,{message:msg, user:safeUser(user), token:makeToken(user)});
+    return sendJSON(res,201,{message:msg,user:safeUser(user),token:makeToken(user)});
   }
 
   // POST /api/login
   if (route === '/login' && method === 'POST') {
     var data = await getBody(req);
     if (!data.email||!data.password) return sendJSON(res,400,{error:'Email and password are required.'});
-    var db = loadDB();
-    var user = db.users.find(function(u){return u.email===data.email;});
+    var db=loadDB();
+    var user=db.users.find(function(u){return u.email===data.email;});
     if (!user||hashPassword(data.password)!==user.passwordHash) return sendJSON(res,401,{error:'Wrong email or password.'});
-    return sendJSON(res,200,{message:'Welcome back, '+user.name+'!', user:safeUser(user), token:makeToken(user)});
+    return sendJSON(res,200,{message:'Welcome back, '+user.name+'!',user:safeUser(user),token:makeToken(user)});
   }
 
   // GET /api/me
   if (route === '/me' && method === 'GET') {
-    var auth = checkToken(getToken(req)); if(!auth) return sendJSON(res,401,{error:'Please log in.'});
-    var db = loadDB(); var user = db.users.find(function(u){return u.id===auth.id;});
+    var auth=checkToken(getToken(req)); if(!auth) return sendJSON(res,401,{error:'Please log in.'});
+    var db=loadDB(); var user=db.users.find(function(u){return u.id===auth.id;});
     if(!user) return sendJSON(res,404,{error:'User not found.'});
     return sendJSON(res,200,{user:safeUser(user)});
   }
 
   // GET /api/bookings
   if (route === '/bookings' && method === 'GET') {
-    var auth = checkToken(getToken(req)); if(!auth) return sendJSON(res,401,{error:'Please log in.'});
-    var db = loadDB();
-    var list = auth.role==='admin' ? db.bookings : db.bookings.filter(function(b){return b.userId===auth.id;});
+    var auth=checkToken(getToken(req)); if(!auth) return sendJSON(res,401,{error:'Please log in.'});
+    var db=loadDB();
+    var list=auth.role==='admin'?db.bookings:db.bookings.filter(function(b){return b.userId===auth.id;});
     if(query.status&&query.status!=='all') list=list.filter(function(b){return b.status===query.status;});
     if(query.search){var s=query.search.toLowerCase();list=list.filter(function(b){return b.destination.toLowerCase().indexOf(s)>-1||b.id.toLowerCase().indexOf(s)>-1;});}
     list=list.sort(function(a,b){return new Date(b.createdAt)-new Date(a.createdAt);});
@@ -1655,54 +1919,74 @@ http.createServer(async function(req, res) {
 
   // POST /api/bookings
   if (route === '/bookings' && method === 'POST') {
-    var auth = checkToken(getToken(req)); if(!auth) return sendJSON(res,401,{error:'Please log in.'});
-    var data = await getBody(req);
+    var auth=checkToken(getToken(req)); if(!auth) return sendJSON(res,401,{error:'Please log in.'});
+    var data=await getBody(req);
     if(!data.destination||!data.waterType||!data.volumeLitres) return sendJSON(res,400,{error:'Destination, water type and volume are required.'});
-    var db = loadDB();
-    var days = data.priority==='Emergency'?2:data.priority==='Urgent'?4:14;
-    var booking = { id:nextBookingId(), userId:auth.id, destination:data.city?data.city+', '+data.destination:data.destination, waterType:data.waterType, volumeLitres:parseInt(data.volumeLitres), priority:data.priority||'Standard', status:'pending', requestorType:data.requestorType||'Individual', requiredBy:data.requiredBy||'', notes:data.notes||'', createdAt:new Date().toISOString(), estimatedDelivery:new Date(Date.now()+days*86400000).toISOString().slice(0,10) };
+    var db=loadDB();
+    var days=data.priority==='Emergency'?2:data.priority==='Urgent'?4:14;
+    var booking={id:nextBookingId(),userId:auth.id,destination:data.city?data.city+', '+data.destination:data.destination,waterType:data.waterType,volumeLitres:parseInt(data.volumeLitres),priority:data.priority||'Standard',status:'pending',requestorType:data.requestorType||'Individual',requiredBy:data.requiredBy||'',notes:data.notes||'',createdAt:new Date().toISOString(),estimatedDelivery:new Date(Date.now()+days*86400000).toISOString().slice(0,10)};
     db.bookings.push(booking); saveDB(db);
-    // Send booking emails
-    var booker = db.users.find(function(u){return u.id===auth.id;});
-    if(booker) { sendBookingEmails(booking, booker.name, booker.email); }
-    return sendJSON(res,201,{message:'Booking '+booking.id+' confirmed! A confirmation email has been sent to you.', booking:booking});
+    var booker=db.users.find(function(u){return u.id===auth.id;});
+    if(booker) sendBookingEmails(booking,booker.name,booker.email);
+    return sendJSON(res,201,{message:'Booking '+booking.id+' confirmed! A confirmation email has been sent.',booking:booking});
   }
 
   // PUT /api/bookings/:id/status
-  var smatch = route.match(/^\/bookings\/(.+)\/status$/);
-  if (smatch && method === 'PUT') {
-    var auth = checkToken(getToken(req)); if(!auth||auth.role!=='admin') return sendJSON(res,403,{error:'Admin only.'});
-    var data = await getBody(req); var db = loadDB();
-    var idx = db.bookings.findIndex(function(b){return b.id===smatch[1];});
-    if(idx===-1) return sendJSON(res,404,{error:'Not found.'});
+  var smatch=route.match(/^\/bookings\/(.+)\/status$/);
+  if(smatch&&method==='PUT'){
+    var auth=checkToken(getToken(req)); if(!auth||auth.role!=='admin') return sendJSON(res,403,{error:'Admin only.'});
+    var data=await getBody(req); var db=loadDB();
+    var idx=db.bookings.findIndex(function(b){return b.id===smatch[1];}); if(idx===-1) return sendJSON(res,404,{error:'Not found.'});
     db.bookings[idx].status=data.status; saveDB(db);
     return sendJSON(res,200,{message:'Updated!',booking:db.bookings[idx]});
   }
 
   // DELETE /api/bookings/:id
-  var dmatch = route.match(/^\/bookings\/(.+)$/);
-  if (dmatch && method === 'DELETE') {
-    var auth = checkToken(getToken(req)); if(!auth) return sendJSON(res,401,{error:'Please log in.'});
-    var db = loadDB(); var idx=db.bookings.findIndex(function(b){return b.id===dmatch[1];});
-    if(idx===-1) return sendJSON(res,404,{error:'Not found.'});
+  var dmatch=route.match(/^\/bookings\/(.+)$/);
+  if(dmatch&&method==='DELETE'){
+    var auth=checkToken(getToken(req)); if(!auth) return sendJSON(res,401,{error:'Please log in.'});
+    var db=loadDB(); var idx=db.bookings.findIndex(function(b){return b.id===dmatch[1];}); if(idx===-1) return sendJSON(res,404,{error:'Not found.'});
     if(auth.role!=='admin'&&db.bookings[idx].userId!==auth.id) return sendJSON(res,403,{error:'Access denied.'});
     db.bookings.splice(idx,1); saveDB(db);
     return sendJSON(res,200,{message:'Booking cancelled.'});
   }
 
   // GET /api/suppliers
-  if (route === '/suppliers' && method === 'GET') {
-    var db = loadDB();
-    return sendJSON(res,200,{suppliers:db.suppliers||[]});
+  if (route==='/suppliers'&&method==='GET') {
+    return sendJSON(res,200,{suppliers:loadDB().suppliers||[]});
+  }
+
+  // PUT /api/suppliers/:id/status
+  var supmatch=route.match(/^\/suppliers\/(.+)\/status$/);
+  if(supmatch&&method==='PUT'){
+    var auth=checkToken(getToken(req)); if(!auth||auth.role!=='admin') return sendJSON(res,403,{error:'Admin only.'});
+    var data=await getBody(req); var db=loadDB();
+    db.suppliers=db.suppliers||[];
+    var idx=db.suppliers.findIndex(function(s){return s.id===supmatch[1];}); if(idx===-1) return sendJSON(res,404,{error:'Supplier not found.'});
+    db.suppliers[idx].status=data.status; saveDB(db);
+    if(data.status==='verified'){
+      var sup=db.suppliers[idx];
+      var user=db.users.find(function(u){return u.id===sup.id;});
+      if(user){
+        var approvalHtml=emailWrap('<h2>🎉 You are now a Verified AquaLink Supplier!</h2><p>Dear <strong>'+sup.name+'</strong>, your supplier application has been <strong style="color:#06d6a0">approved!</strong></p><table><tr><td>Status</td><td style="color:#06d6a0;font-weight:700">✅ Verified</td></tr><tr><td>Organization</td><td>'+sup.organization+'</td></tr><tr><td>Coverage</td><td>'+sup.regions+'</td></tr></table><p style="margin-top:16px">Log in to see available orders in your region.</p><a class=cta href="https://aqualink-1.onrender.com">Login to Dashboard →</a>');
+        sendEmail(user.email,'🎉 You are a Verified AquaLink Supplier!',approvalHtml);
+        sendEmail(ADMIN_EMAIL,'✅ Supplier Approved: '+sup.name,approvalHtml);
+      }
+    }
+    return sendJSON(res,200,{message:'Supplier status updated to: '+data.status});
   }
 
   // GET /api/stats
-  if (route === '/stats' && method === 'GET') {
-    var auth = checkToken(getToken(req)); if(!auth||auth.role!=='admin') return sendJSON(res,403,{error:'Admin only.'});
-    var db = loadDB();
+  if (route==='/stats'&&method==='GET') {
+    var auth=checkToken(getToken(req)); if(!auth||auth.role!=='admin') return sendJSON(res,403,{error:'Admin only.'});
+    var db=loadDB();
+    var paidBookings=db.bookings.filter(function(b){return b.paid;});
+    var totalRevenue=paidBookings.reduce(function(s,b){return s+(b.amountPaid||0);},0);
+    var pendingSuppliers=(db.suppliers||[]).filter(function(s){return s.status!=='verified';}).length;
     return sendJSON(res,200,{
       totalBookings:db.bookings.length, totalUsers:db.users.length,
-      totalSuppliers:(db.suppliers||[]).length,
+      totalSuppliers:(db.suppliers||[]).length, pendingSuppliers:pendingSuppliers,
+      totalRevenue:totalRevenue,
       totalLitres:db.bookings.reduce(function(s,b){return s+(b.volumeLitres||0);},0),
       byStatus:{pending:db.bookings.filter(function(b){return b.status==='pending';}).length,active:db.bookings.filter(function(b){return b.status==='active';}).length,transit:db.bookings.filter(function(b){return b.status==='transit';}).length,complete:db.bookings.filter(function(b){return b.status==='complete';}).length},
       byPriority:{Emergency:db.bookings.filter(function(b){return b.priority==='Emergency';}).length,Urgent:db.bookings.filter(function(b){return b.priority==='Urgent';}).length,Standard:db.bookings.filter(function(b){return b.priority==='Standard';}).length},
@@ -1712,147 +1996,9 @@ http.createServer(async function(req, res) {
   }
 
   // GET /api/users
-  if (route === '/users' && method === 'GET') {
-    var auth = checkToken(getToken(req)); if(!auth||auth.role!=='admin') return sendJSON(res,403,{error:'Admin only.'});
+  if (route==='/users'&&method==='GET') {
+    var auth=checkToken(getToken(req)); if(!auth||auth.role!=='admin') return sendJSON(res,403,{error:'Admin only.'});
     return sendJSON(res,200,{users:loadDB().users.map(safeUser),total:loadDB().users.length});
-  }
-
-  // POST /api/contact
-  if (route === '/contact' && method === 'POST') {
-    var data = await getBody(req);
-    if (!data.name || !data.email || !data.message) return sendJSON(res, 400, { error: 'All fields required.' });
-    var html = emailWrap(
-      '<h2>📩 New Contact Message</h2>' +
-      '<table>' +
-      '<tr><td>From</td><td>' + data.name + '</td></tr>' +
-      '<tr><td>Email</td><td>' + data.email + '</td></tr>' +
-      '<tr><td>Subject</td><td>' + data.subject + '</td></tr>' +
-      '</table>' +
-      '<div style="margin-top:20px;padding:16px;background:#f8fafb;border-radius:10px;color:#333;font-size:.9rem;line-height:1.7">' + data.message + '</div>' +
-      '<p style="margin-top:16px;font-size:.82rem;color:#4a7a9b">Reply directly to: <a href="mailto:' + data.email + '">' + data.email + '</a></p>'
-    );
-    await sendEmail(ADMIN_EMAIL, '📩 AquaLink Contact: ' + data.subject + ' — ' + data.name, html);
-    // Send auto-reply to sender
-    var replyHtml = emailWrap(
-      '<h2>✅ Message Received!</h2>' +
-      '<p>Thank you for contacting AquaLink, <strong>' + data.name + '</strong>!</p>' +
-      '<p>We have received your message and will respond within 24 hours.</p>' +
-      '<table>' +
-      '<tr><td>Subject</td><td>' + data.subject + '</td></tr>' +
-      '<tr><td>Received</td><td>' + new Date().toLocaleString() + '</td></tr>' +
-      '</table>' +
-      '<p style="margin-top:16px;color:#4a7a9b;font-size:.85rem">If you need urgent assistance, email us directly at aqualink79@gmail.com</p>'
-    );
-    sendEmail(data.email, '✅ AquaLink — We received your message!', replyHtml);
-    return sendJSON(res, 200, { success: true });
-  }
-
-  // GET /api/paystack-key
-  if (route === '/paystack-key' && method === 'GET') {
-    return sendJSON(res, 200, { publicKey: PAYSTACK_PUBLIC });
-  }
-
-  // POST /api/init-payment
-  if (route === '/init-payment' && method === 'POST') {
-    var auth = checkToken(getToken(req));
-    if (!auth) return sendJSON(res, 401, { error: 'Please log in.' });
-    var data = await getBody(req);
-    var https = require('https');
-    var payload = JSON.stringify({
-      email: data.email,
-      amount: data.amount,
-      reference: data.reference,
-      currency: 'NGN',
-      metadata: { bookingId: data.bookingId }
-    });
-    var result = await new Promise(function(resolve) {
-      var options = {
-        hostname: 'api.paystack.co',
-        port: 443,
-        path: '/transaction/initialize',
-        method: 'POST',
-        headers: {
-          'Authorization': 'Bearer ' + PAYSTACK_SECRET,
-          'Content-Type': 'application/json',
-          'Content-Length': Buffer.byteLength(payload)
-        }
-      };
-      var req2 = https.request(options, function(res2) {
-        var body = '';
-        res2.on('data', function(c) { body += c; });
-        res2.on('end', function() {
-          try { resolve(JSON.parse(body)); }
-          catch(e) { resolve({ status: false }); }
-        });
-      });
-      req2.on('error', function(e) { resolve({ status: false, message: e.message }); });
-      req2.write(payload);
-      req2.end();
-    });
-    if (result.status && result.data && result.data.authorization_url) {
-      return sendJSON(res, 200, { url: result.data.authorization_url, reference: result.data.reference });
-    } else {
-      return sendJSON(res, 400, { error: result.message || 'Could not initialize payment.' });
-    }
-  }
-
-  // POST /api/verify-payment
-  if (route === '/verify-payment' && method === 'POST') {
-    var auth = checkToken(getToken(req));
-    if (!auth) return sendJSON(res, 401, { error: 'Please log in.' });
-    var data = await getBody(req);
-    var reference = data.reference;
-    var bookingId = data.bookingId;
-    if (!reference) return sendJSON(res, 400, { error: 'Payment reference required.' });
-
-    // Verify with Paystack
-    var https = require('https');
-    var verified = await new Promise(function(resolve) {
-      var options = {
-        hostname: 'api.paystack.co',
-        port: 443,
-        path: '/transaction/verify/' + reference,
-        method: 'GET',
-        headers: {
-          'Authorization': 'Bearer ' + PAYSTACK_SECRET,
-          'Content-Type': 'application/json'
-        }
-      };
-      var req2 = https.request(options, function(res2) {
-        var body = '';
-        res2.on('data', function(c) { body += c; });
-        res2.on('end', function() {
-          try {
-            var result = JSON.parse(body);
-            resolve(result);
-          } catch(e) { resolve({ status: false }); }
-        });
-      });
-      req2.on('error', function() { resolve({ status: false }); });
-      req2.end();
-    });
-
-    if (verified.status && verified.data && verified.data.status === 'success') {
-      // Payment confirmed - update booking
-      var db = loadDB();
-      var idx = db.bookings.findIndex(function(b) { return b.id === bookingId; });
-      if (idx !== -1) {
-        db.bookings[idx].paid = true;
-        db.bookings[idx].paymentRef = reference;
-        db.bookings[idx].amountPaid = verified.data.amount / 100;
-        db.bookings[idx].currency = verified.data.currency;
-        db.bookings[idx].paidAt = new Date().toISOString();
-        saveDB(db);
-        // Send payment confirmation email
-        var booker = db.users.find(function(u) { return u.id === auth.id; });
-        if (booker) {
-          sendPaymentEmail(db.bookings[idx], booker.name, booker.email, verified.data.amount / 100, verified.data.currency);
-        }
-      }
-      return sendJSON(res, 200, { success: true, message: 'Payment confirmed! Your booking is now active.', amount: verified.data.amount / 100, currency: verified.data.currency });
-    } else {
-      return sendJSON(res, 400, { error: 'Payment verification failed. Please contact support.' });
-    }
   }
 
   sendJSON(res,404,{error:'Not found.'});
@@ -1860,7 +2006,7 @@ http.createServer(async function(req, res) {
 }).listen(PORT, function() {
   console.log('');
   console.log('========================================');
-  console.log('   AQUALINK v5 IS RUNNING!');
+  console.log('   AQUALINK v6 IS RUNNING!');
   console.log('========================================');
   console.log('   Open:     http://localhost:' + PORT);
   console.log('   Admin:    admin@aqualink.org');
