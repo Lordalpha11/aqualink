@@ -1540,6 +1540,17 @@ http.createServer(async function(req, res) {
     return json(res,400,{error:'Payment verification failed.'});
   }
 
+  // GET /api/reset-db (one time use - delete after use!)
+  if (route==='/reset-db-aqualink2026' && method==='GET') {
+    try {
+      if (fs.existsSync(DBFILE)) fs.unlinkSync(DBFILE);
+      seed();
+      return json(res,200,{success:true,message:'Database reset! Admin: admin@aqualink.org / admin123'});
+    } catch(e) {
+      return json(res,500,{error:e.message});
+    }
+  }
+
   json(res,404,{error:'Not found.'});
 
 }).listen(PORT, function() {
