@@ -1082,15 +1082,30 @@ async function loadAdminBookings(){
   var tbody=document.getElementById('ab-rows'),empty=document.getElementById('ab-empty');
   if(!r.bookings||r.bookings.length===0){tbody.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
-  tbody.innerHTML=r.bookings.map(function(b){
+  var rows='';
+  for(var i=0;i<r.bookings.length;i++){
+    var b=r.bookings[i];
     var cust=users.find(function(u){return u.id===b.userId;});
-    return '<tr><td class=bid>'+b.id+'</td><td style="font-size:.8rem">'+(cust?cust.name:'—')+'</td><td>'+b.destination+'</td><td>'+fv(b.volumeLitres)+'</td>'+
-    '<td><span class="badge '+pc(b.priority)+'">'+b.priority+'</span></td>'+
-    '<td><select class=ssel onchange="updStat(this.dataset.id,this.value)" data-id="'+b.id+'"><option value=pending'+(b.status==='pending'?' selected':'')+'>Pending</option><option value=active'+(b.status==='active'?' selected':'')+'>Active</option><option value=transit'+(b.status==='transit'?' selected':'')+'>Transit</option><option value=complete'+(b.status==='complete'?' selected':'')+'>Complete</option></select></td>'+
-    '<td>'+(b.paid?'<span style="color:var(--green);font-weight:600">✅ NGN '+(b.amountPaid||0).toLocaleString()+'</span>':'<span style="color:var(--muted)">Unpaid</span>')+'</td>'+
-    '<td style="color:var(--muted);font-size:.78rem">'+b.createdAt.slice(0,10)+'</td>'+
-    '<td><button class=btn-d onclick="cancelB(\''+b.id+'\')">Cancel</button></td></tr>';
-  }).join('');
+    var statusSel='<select class=ssel onchange="updStat(this.dataset.id,this.value)" data-id="'+b.id+'">';
+    statusSel+='<option value=pending'+(b.status==='pending'?' selected':'')+'>Pending</option>';
+    statusSel+='<option value=active'+(b.status==='active'?' selected':'')+'>Active</option>';
+    statusSel+='<option value=transit'+(b.status==='transit'?' selected':'')+'>Transit</option>';
+    statusSel+='<option value=complete'+(b.status==='complete'?' selected':'')+'>Complete</option>';
+    statusSel+='</select>';
+    var paidCell=b.paid?'<span style="color:var(--green);font-weight:600">&#10003; NGN '+(b.amountPaid||0).toLocaleString()+'</span>':'<span style="color:var(--muted)">Unpaid</span>';
+    rows+='<tr>';
+    rows+='<td class=bid>'+b.id+'</td>';
+    rows+='<td style="font-size:.8rem">'+(cust?cust.name:'—')+'</td>';
+    rows+='<td>'+b.destination+'</td>';
+    rows+='<td>'+fv(b.volumeLitres)+'</td>';
+    rows+='<td><span class="badge '+pc(b.priority)+'">'+b.priority+'</span></td>';
+    rows+='<td>'+statusSel+'</td>';
+    rows+='<td>'+paidCell+'</td>';
+    rows+='<td style="color:var(--muted);font-size:.78rem">'+b.createdAt.slice(0,10)+'</td>';
+    rows+='<td><button class=btn-d data-bid="'+b.id+'" onclick="cancelB(this.dataset.bid)">Cancel</button></td>';
+    rows+='</tr>';
+  }
+  tbody.innerHTML=rows;
 }
 
 // ADMIN SUPPLIERS
@@ -1511,6 +1526,7 @@ http.createServer(async function(req, res) {
   console.log('   Password: admin123');
   console.log('========================================\n');
 });
+
 
 
 
