@@ -1118,22 +1118,35 @@ async function loadAdminSuppliers(){
   var tbody=document.getElementById('sup-rows'),empty=document.getElementById('sup-empty');
   if(sups.length===0){tbody.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
-  tbody.innerHTML=sups.map(function(s){
+  var rows='';
+  for(var i=0;i<sups.length;i++){
+    var s=sups[i];
     var isV=s.status==='verified';
-    return '<tr><td style="font-weight:600">'+s.name+'</td><td>'+s.organization+'</td><td>'+s.country+'</td>'+
-    '<td style="color:var(--muted)">'+s.waterTypes+'</td><td style="font-size:.8rem;color:var(--muted)">'+s.regions+'</td>'+
-    '<td><span class="badge '+(isV?'b-active':'b-pending')+'">'+(isV?'✅ Verified':'⏳ Pending')+'</span></td>'+
-    '<td>'+
-      (isV?'<button class=btn-d onclick="supAction(\''+s.id+'\',\'rejected\')">Revoke</button>'
-          :'<button class="btn btn-p" style="padding:5px 11px;font-size:.76rem;margin-right:4px" onclick="supAction(\''+s.id+'\',\'verified\')">✅ Approve</button><button class=btn-d onclick="supAction(\''+s.id+'\',\'rejected\')">❌ Reject</button>')+
-    '</td></tr>';
-  }).join('');
+    var statusBadge='<span class="badge '+(isV?'b-active':'b-pending')+'">'+(isV?'Verified':'Pending')+'</span>';
+    var actionCell='';
+    if(isV){
+      actionCell='<button class=btn-d data-sid="'+s.id+'" data-status="rejected" onclick="supAction(this.dataset.sid,this.dataset.status)">Revoke</button>';
+    } else {
+      actionCell='<button class="btn btn-p" style="padding:5px 11px;font-size:.76rem;margin-right:4px" data-sid="'+s.id+'" data-status="verified" onclick="supAction(this.dataset.sid,this.dataset.status)">Approve</button>';
+      actionCell+='<button class=btn-d data-sid="'+s.id+'" data-status="rejected" onclick="supAction(this.dataset.sid,this.dataset.status)">Reject</button>';
+    }
+    rows+='<tr>';
+    rows+='<td style="font-weight:600">'+s.name+'</td>';
+    rows+='<td>'+s.organization+'</td>';
+    rows+='<td>'+s.country+'</td>';
+    rows+='<td style="color:var(--muted)">'+s.waterTypes+'</td>';
+    rows+='<td style="font-size:.8rem;color:var(--muted)">'+s.regions+'</td>';
+    rows+='<td>'+statusBadge+'</td>';
+    rows+='<td>'+actionCell+'</td>';
+    rows+='</tr>';
+  }
+  tbody.innerHTML=rows;
 }
 async function supAction(id,status){
   if(status==='rejected'&&!confirm('Revoke/reject this supplier?'))return;
   var r=await api('PUT','/suppliers/'+id+'/status',{status:status});
-  if(r.error){toast('❌',r.error);return;}
-  toast('✅',status==='verified'?'Supplier approved! They will receive an email.':'Supplier status updated.');
+  if(r.error){toast('X',r.error);return;}
+  toast('OK',status==='verified'?'Supplier approved! They will receive an email.':'Supplier status updated.');
   loadAdminSuppliers();
 }
 
@@ -1195,19 +1208,31 @@ async function loadBookings(){
   var r=await api('GET','/bookings?status='+status+(search?'&search='+encodeURIComponent(search):''));
   var tbody=document.getElementById('bk-rows'),empty=document.getElementById('bk-empty');
   if(!r.bookings||r.bookings.length===0){
-    tbody.innerHTML='';empty.style.display='block';
-    document.getElementById('bk-msg').innerHTML='No bookings yet. <a href="#" onclick="goPage(\'book\')" style="color:var(--glow)">Make your first →</a>';
+    tbody.innerHTML='';
+    empty.style.display='block';
+    document.getElementById('bk-msg').textContent='No bookings yet. Go to Book Water to place your first order.';
     return;
   }
   empty.style.display='none';
-  tbody.innerHTML=r.bookings.map(function(b){
-    var payCell=b.paid?'<span style="color:var(--green);font-weight:600;font-size:.78rem">✅ Paid</span>':'<button class="btn btn-p" style="padding:4px 10px;font-size:.74rem" data-bid="'+b.id+'" data-vol="'+b.volumeLitres+'" onclick="payBook(this.dataset.bid,parseInt(this.dataset.vol))">Pay</button>';
-    return '<tr><td class=bid>'+b.id+'</td><td>'+b.destination+'</td><td style="color:var(--muted)">'+b.waterType+'</td><td style="font-weight:600">'+fv(b.volumeLitres)+'</td>'+
-    '<td><span class="badge '+pc(b.priority)+'">'+b.priority+'</span></td>'+
-    '<td><span class="badge '+sc(b.status)+'">'+b.status+'</span></td>'+
-    '<td>'+payCell+'</td><td style="color:var(--muted);font-size:.78rem">'+b.createdAt.slice(0,10)+'</td>'+
-    '<td><button class=btn-d data-bid="'+b.id+'" onclick="cancelB(this.dataset.bid)">Cancel</button></td></tr>';
-  }).join('');
+  var rows='';
+  for(var i=0;i<r.bookings.length;i++){
+    var b=r.bookings[i];
+    var payCell=b.paid
+      ? '<span style="color:var(--green);font-weight:600;font-size:.78rem">Paid</span>'
+      : '<button class="btn btn-p" style="padding:4px 10px;font-size:.74rem" data-bid="'+b.id+'" data-vol="'+b.volumeLitres+'" onclick="payBook(this.dataset.bid,parseInt(this.dataset.vol))">Pay</button>';
+    rows+='<tr>';
+    rows+='<td class=bid>'+b.id+'</td>';
+    rows+='<td>'+b.destination+'</td>';
+    rows+='<td style="color:var(--muted)">'+b.waterType+'</td>';
+    rows+='<td style="font-weight:600">'+fv(b.volumeLitres)+'</td>';
+    rows+='<td><span class="badge '+pc(b.priority)+'">'+b.priority+'</span></td>';
+    rows+='<td><span class="badge '+sc(b.status)+'">'+b.status+'</span></td>';
+    rows+='<td>'+payCell+'</td>';
+    rows+='<td style="color:var(--muted);font-size:.78rem">'+b.createdAt.slice(0,10)+'</td>';
+    rows+='<td><button class=btn-d data-bid="'+b.id+'" onclick="cancelB(this.dataset.bid)">Cancel</button></td>';
+    rows+='</tr>';
+  }
+  tbody.innerHTML=rows;
 }
 
 async function updStat(id,status){var r=await api('PUT','/bookings/'+id+'/status',{status:status});if(r.error)toast('❌',r.error);else toast('✅','Updated to '+status);}
@@ -1526,6 +1551,7 @@ http.createServer(async function(req, res) {
   console.log('   Password: admin123');
   console.log('========================================\n');
 });
+
 
 
 
