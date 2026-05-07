@@ -57,6 +57,13 @@ function safeUser(u) { return {id:u.id,name:u.name,email:u.email,role:u.role,org
 // ── SEED ──────────────────────────────────────────────
 function seed() {
   var db=loadDB();
+  // Always ensure admin exists with correct password
+  var adminExists = db.users.find(function(u){return u.email==='admin@aqualink.org';});
+  if (adminExists) {
+    // Update admin password hash in case it changed
+    adminExists.passwordHash = hashPw('admin123');
+    saveDB(db);
+  }
   if (db.users.length>0) return;
   var aid=uid(), nid=uid();
   db.users=[
