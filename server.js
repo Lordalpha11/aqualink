@@ -15,7 +15,7 @@ var SECRET         = 'aqualink2026';
 var DBFILE         = path.join(__dirname, 'database.json');
 var RESEND_KEY     = process.env.RESEND_KEY     || 're_EiMBpMft_AuK6VCRGB7RaUUWfxR3JD2KJ';
 var ADMIN_EMAIL    = process.env.ADMIN_EMAIL    || 'aqualink79@gmail.com';
-var FROM_EMAIL     = 'onboarding@resend.dev';
+var FROM_EMAIL     = 'noreply@aqualinkglobal.com';
 var PAYSTACK_PUB   = process.env.PAYSTACK_PUBLIC || 'pk_test_f01988149ae68d04ac03ed5f5ed887af26ce3787';
 var PAYSTACK_SEC   = process.env.PAYSTACK_SECRET || 'sk_test_5d4f5870cc2f185648fc85d2563ee0086094f8a7';
 
