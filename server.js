@@ -57,13 +57,6 @@ function safeUser(u) { return {id:u.id,name:u.name,email:u.email,role:u.role,org
 // ── SEED ──────────────────────────────────────────────
 function seed() {
   var db=loadDB();
-  // Always ensure admin exists with correct password
-  var adminExists = db.users.find(function(u){return u.email==='admin@aqualink.org';});
-  if (adminExists) {
-    // Update admin password hash in case it changed
-    adminExists.passwordHash = hashPw('admin123');
-    saveDB(db);
-  }
   if (db.users.length>0) return;
   var aid=uid(), nid=uid();
   db.users=[
@@ -105,8 +98,8 @@ function fmtVol(l){return l>=1e6?(l/1e6).toFixed(1)+'M L':l>=1000?(l/1000).toFix
 
 function emailNewBooking(booking,userName,userEmail){
   var priColor=booking.priority==='Emergency'?'#ff6b6b':booking.priority==='Urgent'?'#ffd166':'#4a7a9b';
-  var adminHtml=emailWrap('<h2>New Water Booking!</h2><p>A new booking was submitted on AquaLink.</p><table><tr><td>Booking ID</td><td style="color:#00e5ff;font-weight:700">'+booking.id+'</td></tr><tr><td>From</td><td>'+userName+' ('+userEmail+')</td></tr><tr><td>Destination</td><td>'+booking.destination+'</td></tr><tr><td>Water Type</td><td>'+booking.waterType+'</td></tr><tr><td>Volume</td><td>'+fmtVol(booking.volumeLitres)+'</td></tr><tr><td>Priority</td><td style="color:'+priColor+';font-weight:700">'+booking.priority+'</td></tr><tr><td>Est. Delivery</td><td>'+booking.estimatedDelivery+'</td></tr></table><a class=cta href="https://aqualinkglobal.com">Open Dashboard</a>');
-  var custHtml=emailWrap('<h2>Booking Confirmed!</h2><p>Thank you <strong>'+userName+'</strong>! Your water booking has been received.</p><table><tr><td>Booking ID</td><td style="color:#00e5ff;font-weight:700">'+booking.id+'</td></tr><tr><td>Destination</td><td>'+booking.destination+'</td></tr><tr><td>Volume</td><td>'+fmtVol(booking.volumeLitres)+'</td></tr><tr><td>Priority</td><td>'+booking.priority+'</td></tr><tr><td>Est. Delivery</td><td>'+booking.estimatedDelivery+'</td></tr></table><p>Our team will contact you within 24 hours to coordinate delivery.</p><a class=cta href="https://aqualinkglobal.com">Track Your Booking</a>');
+  var adminHtml=emailWrap('<h2>New Water Booking!</h2><p>A new booking was submitted on AquaLink.</p><table><tr><td>Booking ID</td><td style="color:#00e5ff;font-weight:700">'+booking.id+'</td></tr><tr><td>From</td><td>'+userName+' ('+userEmail+')</td></tr><tr><td>Destination</td><td>'+booking.destination+'</td></tr><tr><td>Water Type</td><td>'+booking.waterType+'</td></tr><tr><td>Volume</td><td>'+fmtVol(booking.volumeLitres)+'</td></tr><tr><td>Priority</td><td style="color:'+priColor+';font-weight:700">'+booking.priority+'</td></tr><tr><td>Est. Delivery</td><td>'+booking.estimatedDelivery+'</td></tr></table><a class=cta href="https://aqualink-1.onrender.com">Open Dashboard</a>');
+  var custHtml=emailWrap('<h2>Booking Confirmed!</h2><p>Thank you <strong>'+userName+'</strong>! Your water booking has been received.</p><table><tr><td>Booking ID</td><td style="color:#00e5ff;font-weight:700">'+booking.id+'</td></tr><tr><td>Destination</td><td>'+booking.destination+'</td></tr><tr><td>Volume</td><td>'+fmtVol(booking.volumeLitres)+'</td></tr><tr><td>Priority</td><td>'+booking.priority+'</td></tr><tr><td>Est. Delivery</td><td>'+booking.estimatedDelivery+'</td></tr></table><p>Our team will contact you within 24 hours to coordinate delivery.</p><a class=cta href="https://aqualink-1.onrender.com">Track Your Booking</a>');
   sendEmail(ADMIN_EMAIL,'New Booking '+booking.id+' - '+booking.priority+' - '+booking.destination,adminHtml);
   sendEmail(userEmail,'Booking Confirmed - '+booking.id,custHtml);
   if(userEmail!==ADMIN_EMAIL) sendEmail(ADMIN_EMAIL,'Forward to Customer ('+userEmail+'): Booking '+booking.id,custHtml);
@@ -114,25 +107,25 @@ function emailNewBooking(booking,userName,userEmail){
 
 function emailWelcome(user){
   var isSupplier=user.userType==='supplier';
-  var adminHtml=emailWrap('<h2>New '+(isSupplier?'Supplier':'User')+' Registered!</h2><table><tr><td>Name</td><td>'+user.name+'</td></tr><tr><td>Email</td><td>'+user.email+'</td></tr><tr><td>Type</td><td>'+(isSupplier?'Water Supplier':'Consumer')+'</td></tr><tr><td>Organization</td><td>'+(user.organization||'—')+'</td></tr><tr><td>Country</td><td>'+(user.country||'—')+'</td></tr></table><a class=cta href="https://aqualinkglobal.com">View Dashboard</a>');
+  var adminHtml=emailWrap('<h2>New '+(isSupplier?'Supplier':'User')+' Registered!</h2><table><tr><td>Name</td><td>'+user.name+'</td></tr><tr><td>Email</td><td>'+user.email+'</td></tr><tr><td>Type</td><td>'+(isSupplier?'Water Supplier':'Consumer')+'</td></tr><tr><td>Organization</td><td>'+(user.organization||'—')+'</td></tr><tr><td>Country</td><td>'+(user.country||'—')+'</td></tr></table><a class=cta href="https://aqualink-1.onrender.com">View Dashboard</a>');
   sendEmail(ADMIN_EMAIL,'New '+(isSupplier?'Supplier':'User')+': '+user.name+' from '+(user.country||'?'),adminHtml);
   var userHtml=isSupplier
     ? emailWrap('<h2>Supplier Application Received!</h2><p>Thank you <strong>'+user.name+'</strong>! Your application has been received.</p><table><tr><td>Step 1</td><td>Team reviews application (24 hours)</td></tr><tr><td>Step 2</td><td>Verification of water supply capacity</td></tr><tr><td>Step 3</td><td>You receive Verified Supplier badge</td></tr><tr><td>Step 4</td><td>Start receiving booking requests</td></tr></table><p>Questions? Email aqualink79@gmail.com</p>')
-    : emailWrap('<h2>Welcome to AquaLink!</h2><p>Your account is ready, <strong>'+user.name+'</strong>! You can now book clean water for your community.</p><table><tr><td>Email</td><td>'+user.email+'</td></tr><tr><td>Country</td><td>'+(user.country||'—')+'</td></tr></table><p>You can now book water, track deliveries, and request emergency supplies.</p><a class=cta href="https://aqualinkglobal.com">Book Water Now</a>');
+    : emailWrap('<h2>Welcome to AquaLink!</h2><p>Your account is ready, <strong>'+user.name+'</strong>! You can now book clean water for your community.</p><table><tr><td>Email</td><td>'+user.email+'</td></tr><tr><td>Country</td><td>'+(user.country||'—')+'</td></tr></table><p>You can now book water, track deliveries, and request emergency supplies.</p><a class=cta href="https://aqualink-1.onrender.com">Book Water Now</a>');
   sendEmail(user.email,isSupplier?'AquaLink Supplier Application Received':'Welcome to AquaLink!',userHtml);
   if(user.email!==ADMIN_EMAIL) sendEmail(ADMIN_EMAIL,'Forward to '+(isSupplier?'Supplier':'User')+' ('+user.email+'): Welcome Email',userHtml);
 }
 
 function emailPayment(booking,userName,userEmail,amount,currency){
-  var adminHtml=emailWrap('<h2>Payment Received!</h2><table><tr><td>Booking ID</td><td style="color:#00e5ff;font-weight:700">'+booking.id+'</td></tr><tr><td>Customer</td><td>'+userName+'</td></tr><tr><td>Amount</td><td style="color:#06d6a0;font-weight:700">'+currency+' '+amount.toLocaleString()+'</td></tr><tr><td>Destination</td><td>'+booking.destination+'</td></tr></table><a class=cta href="https://aqualinkglobal.com">View Dashboard</a>');
-  var custHtml=emailWrap('<h2>Payment Confirmed!</h2><p>Thank you <strong>'+userName+'</strong>! Your payment has been received and your booking is now active.</p><table><tr><td>Booking ID</td><td style="color:#00e5ff;font-weight:700">'+booking.id+'</td></tr><tr><td>Amount Paid</td><td style="color:#06d6a0;font-weight:700">'+currency+' '+amount.toLocaleString()+'</td></tr><tr><td>Status</td><td>Active - being coordinated</td></tr></table><p>Our team will coordinate your delivery. You will be contacted within 24 hours.</p><a class=cta href="https://aqualinkglobal.com">Track Booking</a>');
+  var adminHtml=emailWrap('<h2>Payment Received!</h2><table><tr><td>Booking ID</td><td style="color:#00e5ff;font-weight:700">'+booking.id+'</td></tr><tr><td>Customer</td><td>'+userName+'</td></tr><tr><td>Amount</td><td style="color:#06d6a0;font-weight:700">'+currency+' '+amount.toLocaleString()+'</td></tr><tr><td>Destination</td><td>'+booking.destination+'</td></tr></table><a class=cta href="https://aqualink-1.onrender.com">View Dashboard</a>');
+  var custHtml=emailWrap('<h2>Payment Confirmed!</h2><p>Thank you <strong>'+userName+'</strong>! Your payment has been received and your booking is now active.</p><table><tr><td>Booking ID</td><td style="color:#00e5ff;font-weight:700">'+booking.id+'</td></tr><tr><td>Amount Paid</td><td style="color:#06d6a0;font-weight:700">'+currency+' '+amount.toLocaleString()+'</td></tr><tr><td>Status</td><td>Active - being coordinated</td></tr></table><p>Our team will coordinate your delivery. You will be contacted within 24 hours.</p><a class=cta href="https://aqualink-1.onrender.com">Track Booking</a>');
   sendEmail(ADMIN_EMAIL,'Payment Received - '+booking.id+' - '+currency+' '+amount,adminHtml);
   sendEmail(userEmail,'Payment Confirmed - AquaLink Booking '+booking.id,custHtml);
   if(userEmail!==ADMIN_EMAIL) sendEmail(ADMIN_EMAIL,'Forward to Customer ('+userEmail+'): Payment Receipt',custHtml);
 }
 
 function emailSupplierApproved(sup,userEmail){
-  var html=emailWrap('<h2>You are now a Verified AquaLink Supplier!</h2><p>Dear <strong>'+sup.name+'</strong>, your supplier application has been <strong style="color:#06d6a0">approved!</strong></p><table><tr><td>Status</td><td style="color:#06d6a0;font-weight:700">Verified Supplier</td></tr><tr><td>Organization</td><td>'+sup.organization+'</td></tr><tr><td>Coverage</td><td>'+sup.regions+'</td></tr><tr><td>Water Types</td><td>'+sup.waterTypes+'</td></tr></table><p>You will now start receiving booking requests. Log in to your dashboard to see available orders.</p><a class=cta href="https://aqualinkglobal.com">Login to Dashboard</a>');
+  var html=emailWrap('<h2>You are now a Verified AquaLink Supplier!</h2><p>Dear <strong>'+sup.name+'</strong>, your supplier application has been <strong style="color:#06d6a0">approved!</strong></p><table><tr><td>Status</td><td style="color:#06d6a0;font-weight:700">Verified Supplier</td></tr><tr><td>Organization</td><td>'+sup.organization+'</td></tr><tr><td>Coverage</td><td>'+sup.regions+'</td></tr><tr><td>Water Types</td><td>'+sup.waterTypes+'</td></tr></table><p>You will now start receiving booking requests. Log in to your dashboard to see available orders.</p><a class=cta href="https://aqualink-1.onrender.com">Login to Dashboard</a>');
   sendEmail(userEmail,'You are a Verified AquaLink Supplier!',html);
   sendEmail(ADMIN_EMAIL,'Supplier Approved: '+sup.name,html);
 }
@@ -141,6 +134,94 @@ function emailSupplierApproved(sup,userEmail){
 function cors(res){res.setHeader('Access-Control-Allow-Origin','*');res.setHeader('Access-Control-Allow-Headers','Content-Type,Authorization');res.setHeader('Access-Control-Allow-Methods','GET,POST,PUT,DELETE,OPTIONS');}
 function json(res,status,data){cors(res);res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(data));}
 function html(res,body){cors(res);res.writeHead(200,{'Content-Type':'text/html'});res.end(body);}
+
+// ── POLICY PAGE TEMPLATE ──────────────────────────────
+function policyPage(title, content) {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>${title} — AquaLink</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Outfit',sans-serif;background:#010b14;color:#c8f0ff;min-height:100vh}
+.topbar{background:rgba(1,11,20,0.98);border-bottom:1px solid rgba(0,229,255,0.1);padding:16px 48px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:3px;color:#fff;display:flex;align-items:center;gap:10px;text-decoration:none}
+.lm{width:24px;height:24px;background:linear-gradient(135deg,#1578c8,#00e5ff);clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%)}
+.back{padding:8px 18px;border-radius:100px;border:1.5px solid rgba(0,229,255,0.25);color:#c8f0ff;background:transparent;font-family:'Outfit',sans-serif;font-weight:600;font-size:.82rem;cursor:pointer;text-decoration:none;transition:all .2s}
+.back:hover{border-color:#00e5ff;color:#00e5ff}
+.wrap{max-width:760px;margin:0 auto;padding:60px 24px 80px}
+.tag{font-size:.7rem;text-transform:uppercase;letter-spacing:3px;color:#00e5ff;font-weight:700;margin-bottom:10px}
+h1{font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:2px;color:#fff;margin-bottom:6px}
+.date{font-size:.78rem;color:#4a7a9b;margin-bottom:40px}
+.section{margin-bottom:32px;padding:24px;background:rgba(6,32,64,0.4);border:1px solid rgba(0,229,255,0.08);border-radius:16px}
+.section h2{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:1.5px;color:#fff;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.section h2 span{font-size:1rem}
+.section p{color:#4a7a9b;font-size:.88rem;line-height:1.8}
+.section p + p{margin-top:10px}
+.highlight{color:#c8f0ff}
+.footer{text-align:center;padding-top:40px;border-top:1px solid rgba(0,229,255,0.07);font-size:.78rem;color:#4a7a9b}
+.footer a{color:#00e5ff;text-decoration:none}
+@media(max-width:600px){.topbar{padding:14px 20px}.wrap{padding:40px 16px 60px}h1{font-size:2.2rem}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="logo" href="/"><div class="lm"></div>AQUALINK</a>
+  <a class="back" href="/">← Back to Platform</a>
+</div>
+<div class="wrap">
+  <div class="tag">Legal</div>
+  <h1>${title}</h1>
+  <p class="date">Last updated: May 2026 &nbsp;|&nbsp; AquaLink Global</p>
+  ${content}
+  <div class="footer">
+    <p>Questions? Email us at <a href="mailto:aqualink79@gmail.com">aqualink79@gmail.com</a> — we respond within 48 hours.</p>
+    <p style="margin-top:8px">© 2026 AquaLink Global. All rights reserved.</p>
+  </div>
+</div>
+</body>
+</html>`;
+}
+
+var PRIVACY_CONTENT = `
+  <div class="section"><h2><span>📋</span> 1. Information We Collect</h2><p>We collect your name, email address, organization name, country, and payment details when you register on AquaLink. We also collect booking data, delivery records, and platform interaction history.</p></div>
+  <div class="section"><h2><span>🎯</span> 2. How We Use Your Information</h2><p>Your information is used to process and manage water bookings, send booking confirmations and delivery updates, match you with verified water suppliers, process payments securely, and improve our platform and services.</p></div>
+  <div class="section"><h2><span>💳</span> 3. Payment Information</h2><p>All payments are processed securely through <span class="highlight">Paystack</span>. AquaLink does not store your full card details on our servers. All payment data is encrypted and handled in accordance with PCI DSS standards.</p></div>
+  <div class="section"><h2><span>🤝</span> 4. Data Sharing</h2><p>We do not sell your personal data to third parties. We share your information only with: assigned water suppliers (name and delivery destination only), our payment processor (Paystack), and regulatory or law enforcement authorities when required by law.</p></div>
+  <div class="section"><h2><span>🔒</span> 5. Data Security</h2><p>We implement industry-standard security measures including encrypted data transmission (HTTPS), hashed password storage, and access-controlled databases to protect your information.</p></div>
+  <div class="section"><h2><span>✅</span> 6. Your Rights</h2><p>You may access, correct, or request deletion of your personal data at any time by contacting us at <span class="highlight">aqualink79@gmail.com</span>. We will respond to all requests within 48 hours.</p></div>
+`;
+
+var TERMS_CONTENT = `
+  <div class="section"><h2><span>📜</span> 1. Acceptance of Terms</h2><p>By accessing or using AquaLink, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the platform.</p></div>
+  <div class="section"><h2><span>💧</span> 2. Platform Description</h2><p>AquaLink is an online marketplace that connects water suppliers with consumers including NGOs, governments, and communities. We facilitate bookings and payment collection on behalf of vendors, but the fulfilment and physical delivery of water is the responsibility of the assigned supplier.</p></div>
+  <div class="section"><h2><span>👤</span> 3. User Responsibilities</h2><p>Users agree to provide accurate registration and delivery information, ensure delivery locations are accessible at the agreed time, and pay for bookings in full before dispatch. Misuse of the platform, including fraudulent bookings, may result in account suspension.</p></div>
+  <div class="section"><h2><span>🚚</span> 4. Supplier Responsibilities</h2><p>Verified suppliers agree to deliver water as specified in the booking — correct volume, water type, and destination. Suppliers must maintain quality standards. Failure to fulfil confirmed orders may result in removal from the platform and withholding of payment.</p></div>
+  <div class="section"><h2><span>💰</span> 5. Payments & Fees</h2><p>All payments are collected by AquaLink via Paystack on behalf of the water vendor. AquaLink charges a <span class="highlight">15% platform fee</span> on each transaction. Suppliers receive <span class="highlight">85% of the order value</span>, disbursed within 48 hours of confirmed delivery. No funds are stored permanently on the platform — there are no user or vendor wallets.</p></div>
+  <div class="section"><h2><span>❌</span> 6. Cancellations</h2><p>Cancellations are free before a supplier has been assigned to your booking. After supplier assignment, a cancellation fee may apply. Emergency bookings cannot be cancelled once the supplier has been dispatched. To cancel, email aqualink79@gmail.com with your Booking ID.</p></div>
+  <div class="section"><h2><span>⚖️</span> 7. Limitation of Liability</h2><p>AquaLink acts as an intermediary marketplace. We are not liable for delays or quality issues caused by the supplier, force majeure events, or circumstances beyond our reasonable control. Our total liability shall not exceed the amount paid for the specific booking in question.</p></div>
+  <div class="section"><h2><span>📧</span> 8. Contact</h2><p>For any questions regarding these terms, contact us at <span class="highlight">aqualink79@gmail.com</span>.</p></div>
+`;
+
+var REFUND_CONTENT = `
+  <div class="section"><h2><span>✅</span> Full Refund</h2><p>You are entitled to a full refund in the following circumstances:</p><p>• Your booking is cancelled before a supplier has been assigned.<br>• No verified supplier is available for your location or volume requirement.<br>• Delivery is not completed within 48 hours of the agreed date for Emergency-priority orders.<br>• The booking was made in error and reported within 1 hour of placement.</p></div>
+  <div class="section"><h2><span>⚠️</span> Partial Refund</h2><p>A partial refund may be issued in the following cases:</p><p>• The volume of water delivered is less than the volume booked and paid for.<br>• The water quality does not meet the agreed standard (potable, agricultural, etc.), verified by our team.<br>In these cases, a refund proportional to the undelivered or substandard portion will be processed.</p></div>
+  <div class="section"><h2><span>❌</span> No Refund</h2><p>No refund will be issued if:</p><p>• Delivery was completed as specified in the booking.<br>• The recipient was unavailable at the delivery location at the agreed time.<br>• Incorrect delivery information was provided by the customer.<br>• The cancellation request is made after the supplier has been dispatched for Standard or Urgent bookings.</p></div>
+  <div class="section"><h2><span>🔄</span> Disputes Between Buyers and Vendors</h2><p>If a dispute arises between a buyer and a supplier, AquaLink will act as the intermediary. Funds held by the platform will not be disbursed to the supplier until the dispute is resolved. To raise a dispute, email <span class="highlight">aqualink79@gmail.com</span> with your Booking ID and a description of the issue within <span class="highlight">48 hours</span> of the scheduled delivery date.</p></div>
+  <div class="section"><h2><span>⏱️</span> How to Request a Refund</h2><p>Email <span class="highlight">aqualink79@gmail.com</span> with your Booking ID and the reason for your refund request. Approved refunds are processed within <span class="highlight">5–7 business days</span> back to your original payment method.</p></div>
+`;
+
+var SHIPPING_CONTENT = `
+  <div class="section"><h2><span>🚚</span> How Delivery Works</h2><p>AquaLink is an online marketplace — we are not a fulfilment centre. Water products are delivered directly from the assigned third-party vendor (water supplier) to the customer's specified delivery location. AquaLink coordinates and tracks the delivery but does not physically handle the water.</p></div>
+  <div class="section"><h2><span>📍</span> Delivery Areas</h2><p>AquaLink currently serves customers across Africa, Asia, the Middle East, and South America. Available delivery areas depend on the verified suppliers in our network. If no supplier is available in your region, you will be notified and a full refund will be issued.</p></div>
+  <div class="section"><h2><span>⏰</span> Delivery Timeframes</h2><p>Estimated delivery times are based on the priority level selected at booking:</p><p>• <span class="highlight">Emergency</span> — 24 to 48 hours after payment confirmation.<br>• <span class="highlight">Urgent</span> — 2 to 4 business days after payment confirmation.<br>• <span class="highlight">Standard</span> — 7 to 14 business days after payment confirmation.</p><p>Timeframes are estimates and may vary depending on supplier availability and location accessibility.</p></div>
+  <div class="section"><h2><span>💳</span> Shipping Costs</h2><p>Delivery costs are included in the booking price displayed at checkout. There are no hidden delivery fees. The price you pay is the total amount — AquaLink retains a 15% platform fee and disburses 85% to the supplier upon confirmed delivery.</p></div>
+  <div class="section"><h2><span>📦</span> Order Tracking</h2><p>Once your booking is confirmed and paid, you can track its status in real time from your AquaLink dashboard. Status updates include: Pending, Active (supplier assigned), In Transit, and Completed.</p></div>
+  <div class="section"><h2><span>📧</span> Delivery Issues</h2><p>If your delivery has not arrived within the estimated timeframe, contact us immediately at <span class="highlight">aqualink79@gmail.com</span> with your Booking ID. We will investigate and resolve the issue within 24 hours, including issuing a refund where applicable under our Refund Policy.</p></div>
+`;
 
 // ── HTML APP ──────────────────────────────────────────
 var APP = `<!DOCTYPE html>
@@ -154,7 +235,6 @@ var APP = `<!DOCTYPE html>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--ink:#010b14;--navy:#062040;--sky:#1578c8;--glow:#00e5ff;--ice:#c8f0ff;--gold:#ffd166;--coral:#ff6b6b;--green:#06d6a0;--muted:#4a7a9b;--foam:#38b6ff}
 body{font-family:'Outfit',sans-serif;background:var(--ink);color:var(--ice);min-height:100vh}
-/* NAV */
 .land-nav{position:fixed;top:0;left:0;right:0;z-index:200;padding:16px 48px;display:flex;align-items:center;justify-content:space-between;background:rgba(1,11,20,0.9);backdrop-filter:blur(20px);border-bottom:1px solid rgba(0,229,255,0.08)}
 .logo{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:3px;color:#fff;display:flex;align-items:center;gap:10px}
 .lm{width:28px;height:28px;background:linear-gradient(135deg,var(--sky),var(--glow));clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);animation:spin 8s linear infinite;box-shadow:0 0 16px rgba(0,229,255,0.3)}
@@ -167,7 +247,6 @@ body{font-family:'Outfit',sans-serif;background:var(--ink);color:var(--ice);min-
 .btn-outline:hover{border-color:var(--glow);color:var(--glow)}
 .btn-solid{padding:9px 20px;border-radius:100px;background:linear-gradient(135deg,var(--sky),var(--glow));color:var(--ink);border:none;font-family:'Outfit',sans-serif;font-weight:700;font-size:.83rem;cursor:pointer;transition:all .2s}
 .btn-solid:hover{transform:scale(1.05);box-shadow:0 6px 20px rgba(0,229,255,0.3)}
-/* HERO */
 .hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 40px 80px;background:radial-gradient(ellipse at 50% 40%,rgba(21,120,200,0.12),transparent 70%)}
 .hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(0,229,255,0.07);border:1px solid rgba(0,229,255,0.2);border-radius:100px;padding:7px 18px;font-size:.72rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--glow);margin-bottom:28px}
 .ldot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 1.5s infinite}
@@ -181,19 +260,16 @@ body{font-family:'Outfit',sans-serif;background:var(--ink);color:var(--ice);min-
 .btn-hp:hover{transform:translateY(-3px);box-shadow:0 14px 40px rgba(0,229,255,0.4)}
 .btn-hg{padding:15px 36px;border-radius:100px;border:1.5px solid rgba(0,229,255,0.3);color:var(--ice);background:transparent;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:2px;cursor:pointer;transition:all .2s}
 .btn-hg:hover{border-color:var(--glow);color:var(--glow);transform:translateY(-3px)}
-/* STATS */
 .stats-strip{background:rgba(6,32,64,0.7);border-top:1px solid rgba(0,229,255,0.08);border-bottom:1px solid rgba(0,229,255,0.08);padding:40px 60px;display:grid;grid-template-columns:repeat(4,1fr)}
 .si{text-align:center;position:relative}
 .si+.si::before{content:'';position:absolute;left:0;top:20%;bottom:20%;width:1px;background:rgba(0,229,255,0.1)}
 .sn{font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:2px;background:linear-gradient(135deg,var(--foam),var(--glow));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
 .sl{font-size:.7rem;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-top:6px}
-/* SECTIONS */
 .section{padding:80px 60px;max-width:1200px;margin:0 auto}
 .sec-tag{font-size:.7rem;text-transform:uppercase;letter-spacing:3px;color:var(--glow);font-weight:700;margin-bottom:12px}
 .sec-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.5rem,5vw,4rem);letter-spacing:2px;color:#fff;line-height:1;margin-bottom:16px}
 .sec-title em{font-style:normal;-webkit-text-stroke:1.5px var(--glow);color:transparent}
 .sec-sub{color:var(--muted);font-size:.95rem;line-height:1.8;max-width:480px;font-weight:300}
-/* CARDS */
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:48px}
 .card-box{background:rgba(6,32,64,0.5);border:1px solid rgba(0,229,255,0.1);border-radius:20px;padding:28px;transition:all .25s;cursor:pointer}
 .card-box:hover{transform:translateY(-6px);border-color:rgba(0,229,255,0.25);box-shadow:0 20px 50px rgba(0,0,0,0.3)}
@@ -202,14 +278,12 @@ body{font-family:'Outfit',sans-serif;background:var(--ink);color:var(--ice);min-
 .card-box p{font-size:.85rem;color:var(--muted);line-height:1.7;margin-bottom:16px}
 .card-link{font-size:.82rem;color:var(--glow);font-weight:600;background:none;border:1.5px solid rgba(0,229,255,0.25);border-radius:100px;padding:7px 16px;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s}
 .card-link:hover{background:rgba(0,229,255,0.08);border-color:var(--glow)}
-/* ABOUT */
 .about-sec{background:rgba(6,32,64,0.2);border-top:1px solid rgba(0,229,255,0.08);padding:80px 60px}
 .about-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
 .about-stats{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .astat{background:rgba(6,32,64,0.6);border:1px solid rgba(0,229,255,0.12);border-radius:16px;padding:24px;text-align:center}
 .astat-num{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;background:linear-gradient(135deg,var(--foam),var(--glow));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .astat-label{font-size:.78rem;color:var(--muted);margin-top:4px}
-/* SUPPLIER CTA */
 .sup-cta-sec{background:rgba(6,32,64,0.3);border-top:1px solid rgba(0,229,255,0.08);padding:80px 60px}
 .sup-cta-inner{max-width:1200px;margin:0 auto}
 .sup-cta-box{background:linear-gradient(135deg,rgba(10,74,124,0.5),rgba(6,32,64,0.8));border:1px solid rgba(0,229,255,0.15);border-radius:24px;padding:44px;display:flex;align-items:center;justify-content:space-between;gap:32px;flex-wrap:wrap;margin-top:36px}
@@ -217,7 +291,6 @@ body{font-family:'Outfit',sans-serif;background:var(--ink);color:var(--ice);min-
 .sup-cta-box p{color:var(--muted);font-size:.88rem;line-height:1.7;max-width:480px}
 .sup-perks{display:flex;gap:20px;flex-wrap:wrap;margin-top:14px}
 .sup-perks span{font-size:.82rem;color:var(--green)}
-/* CONTACT */
 .contact-sec{padding:80px 60px}
 .contact-inner{max-width:900px;margin:0 auto}
 .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start;margin-top:40px}
@@ -235,7 +308,6 @@ textarea.finp{resize:vertical;min-height:80px}
 .c-result{font-size:.82rem;margin-bottom:12px;display:none}
 .cbtn{width:100%;padding:13px;background:linear-gradient(135deg,var(--sky),var(--glow));border:none;border-radius:14px;color:var(--ink);font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;cursor:pointer;transition:all .2s}
 .cbtn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,229,255,0.3)}
-/* FOOTER */
 .footer{background:rgba(2,12,24,0.9);border-top:1px solid rgba(0,229,255,0.07);padding:48px 60px 28px}
 .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:48px;max-width:1200px;margin:0 auto 40px}
 .footer-brand p{color:var(--muted);font-size:.82rem;line-height:1.8;margin-top:12px;max-width:260px}
@@ -244,7 +316,6 @@ textarea.finp{resize:vertical;min-height:80px}
 .footer-col a:hover{color:var(--glow)}
 .footer-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:24px;border-top:1px solid rgba(0,229,255,0.06);max-width:1200px;margin:0 auto;flex-wrap:wrap;gap:10px}
 .footer-bottom p{font-size:.76rem;color:var(--muted)}
-/* MODALS */
 .overlay{position:fixed;inset:0;background:rgba(1,11,20,0.92);backdrop-filter:blur(14px);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s;padding:20px}
 .overlay.open{opacity:1;pointer-events:all}
 .mbox{background:linear-gradient(135deg,rgba(6,32,64,0.97),rgba(2,21,37,0.99));border:1px solid rgba(0,229,255,0.2);border-radius:24px;padding:36px;width:100%;max-width:480px;transform:scale(.95) translateY(16px);transition:transform .3s;position:relative;box-shadow:0 40px 80px rgba(0,0,0,0.6);max-height:90vh;overflow-y:auto}
@@ -267,23 +338,12 @@ textarea.finp{resize:vertical;min-height:80px}
 .mbtn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,229,255,0.3)}
 .mbtn:disabled{opacity:.5;transform:none}
 .mhint{text-align:center;font-size:.74rem;color:var(--muted);margin-top:10px}
-/* TYPE CARDS */
 .type-sel{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
 .type-card{padding:16px;border:1.5px solid rgba(0,229,255,0.15);border-radius:14px;cursor:pointer;text-align:center;transition:all .2s}
 .type-card:hover,.type-card.sel{border-color:var(--glow);background:rgba(0,229,255,0.07)}
 .type-card .tico{font-size:1.8rem;margin-bottom:6px}
 .type-card h5{font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:1.5px;color:#fff;margin-bottom:3px}
 .type-card p{font-size:.72rem;color:var(--muted);line-height:1.4}
-/* LEGAL MODALS */
-.legal-overlay{position:fixed;inset:0;background:rgba(1,11,20,0.96);z-index:1000;overflow-y:auto;padding:40px 20px;display:none}
-.legal-box{max-width:760px;margin:0 auto;background:rgba(6,32,64,0.9);border:1px solid rgba(0,229,255,0.2);border-radius:20px;padding:40px}
-.legal-box h2{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:2px;color:#fff;margin-bottom:6px}
-.legal-box .date{color:var(--muted);font-size:.78rem;margin-bottom:24px}
-.legal-sec{margin-bottom:20px}
-.legal-sec h4{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:1.5px;color:#fff;margin-bottom:8px}
-.legal-sec p{color:var(--muted);font-size:.86rem;line-height:1.8}
-.legal-close{float:right;background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;margin-top:-8px}
-/* APP */
 #app{display:none}
 .topbar{background:rgba(1,11,20,0.96);border-bottom:1px solid rgba(0,229,255,0.1);padding:13px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;backdrop-filter:blur(20px);flex-wrap:wrap;gap:8px}
 .tlogo{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:3px;display:flex;align-items:center;gap:8px;cursor:pointer}
@@ -296,7 +356,6 @@ textarea.finp{resize:vertical;min-height:80px}
 .turole{font-size:.7rem;color:var(--muted);background:rgba(0,229,255,0.07);border:1px solid rgba(0,229,255,0.15);border-radius:100px;padding:2px 8px}
 .tlout{padding:6px 14px;border-radius:100px;border:1px solid rgba(255,107,107,0.3);color:var(--coral);background:transparent;font-size:.76rem;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s}
 .tlout:hover{background:rgba(255,107,107,0.1)}
-/* PAGES */
 .page{display:none;padding:28px;max-width:1100px;margin:0 auto}
 .page.on{display:block}
 .ptitle{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px;color:#fff;margin-bottom:5px}
@@ -380,28 +439,18 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
 </style>
 </head>
 <body>
-
-<!-- ════════════════════════════
-     LANDING PAGE
-════════════════════════════ -->
 <div id="landing">
-
   <nav class="land-nav">
     <div class="logo"><div class="lm"></div>AQUALINK</div>
     <div class="land-links">
-      <a href="#how">How It Works</a>
-      <a href="#who">Who It's For</a>
-      <a href="#suppliers">Become a Supplier</a>
-      <a href="#about">About Us</a>
-      <a href="#contact">Contact</a>
+      <a href="#how">How It Works</a><a href="#who">Who It's For</a>
+      <a href="#suppliers">Become a Supplier</a><a href="#about">About Us</a><a href="#contact">Contact</a>
     </div>
     <div class="land-btns">
       <button class="btn-outline" onclick="openAuth('login')">Login</button>
       <button class="btn-solid"   onclick="openAuth('register')">Get Started</button>
     </div>
   </nav>
-
-  <!-- HERO -->
   <div class="hero">
     <div class="hero-badge"><span class="ldot"></span>Platform Live — Join Today</div>
     <h1><div class="filled">WATER</div><div class="stroke">FOR ALL</div></h1>
@@ -411,67 +460,32 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <button class="btn-hg" onclick="openAuth('register','supplier')">Become a Supplier</button>
     </div>
   </div>
-
-  <!-- STATS -->
   <div class="stats-strip">
     <div class="si"><div class="sn" id="ls-bookings">0</div><div class="sl">Bookings Made</div></div>
     <div class="si"><div class="sn" id="ls-users">0</div><div class="sl">Registered Users</div></div>
     <div class="si"><div class="sn" id="ls-litres">0</div><div class="sl">Litres Requested</div></div>
     <div class="si"><div class="sn" id="ls-suppliers">0</div><div class="sl">Verified Suppliers</div></div>
   </div>
-
-  <!-- HOW IT WORKS -->
   <div class="section" id="how">
     <div class="sec-tag">Simple Process</div>
     <h2 class="sec-title">HOW AQUALINK <em>WORKS</em></h2>
     <p class="sec-sub">Three simple steps to get clean water delivered anywhere in the world.</p>
     <div class="grid3">
-      <div class="card-box">
-        <div class="card-icon">📝</div>
-        <h4>REGISTER YOUR ACCOUNT</h4>
-        <p>Sign up as a Consumer or Water Supplier. Verification takes under 24 hours.</p>
-      </div>
-      <div class="card-box">
-        <div class="card-icon">💧</div>
-        <h4>SUBMIT A BOOKING</h4>
-        <p>Tell us your location, volume, water type and urgency. We match you to the nearest verified supplier.</p>
-      </div>
-      <div class="card-box">
-        <div class="card-icon">🚚</div>
-        <h4>RECEIVE YOUR WATER</h4>
-        <p>Our team coordinates with your matched supplier and keeps you updated until delivery is confirmed.</p>
-      </div>
+      <div class="card-box"><div class="card-icon">📝</div><h4>REGISTER YOUR ACCOUNT</h4><p>Sign up as a Consumer or Water Supplier. Verification takes under 24 hours.</p></div>
+      <div class="card-box"><div class="card-icon">💧</div><h4>SUBMIT A BOOKING</h4><p>Tell us your location, volume, water type and urgency. We match you to the nearest verified supplier.</p></div>
+      <div class="card-box"><div class="card-icon">🚚</div><h4>RECEIVE YOUR WATER</h4><p>Our team coordinates with your matched supplier and keeps you updated until delivery is confirmed.</p></div>
     </div>
   </div>
-
-  <!-- WHO IT'S FOR -->
   <div class="section" id="who" style="padding-top:0">
     <div class="sec-tag">For Everyone</div>
     <h2 class="sec-title">WHO CAN USE <em>AQUALINK</em></h2>
     <p class="sec-sub">Whether you need water or supply it — AquaLink is built for you.</p>
     <div class="grid3">
-      <div class="card-box">
-        <div class="card-icon">🏛️</div>
-        <h4>GOVERNMENTS</h4>
-        <p>Manage national water distribution, respond to crises, and coordinate emergency relief at scale.</p>
-        <button class="card-link" onclick="openAuth('register','consumer')">Register as Government →</button>
-      </div>
-      <div class="card-box">
-        <div class="card-icon">🌍</div>
-        <h4>NGOs & AID ORGS</h4>
-        <p>Book emergency water supplies for affected communities with priority processing for humanitarian organizations.</p>
-        <button class="card-link" onclick="openAuth('register','consumer')">Register as NGO →</button>
-      </div>
-      <div class="card-box">
-        <div class="card-icon">👥</div>
-        <h4>COMMUNITIES</h4>
-        <p>Individual families and communities can book potable water for drinking, sanitation, or agricultural use.</p>
-        <button class="card-link" onclick="openAuth('register','consumer')">Register as Community →</button>
-      </div>
+      <div class="card-box"><div class="card-icon">🏛️</div><h4>GOVERNMENTS</h4><p>Manage national water distribution, respond to crises, and coordinate emergency relief at scale.</p><button class="card-link" onclick="openAuth('register','consumer')">Register as Government →</button></div>
+      <div class="card-box"><div class="card-icon">🌍</div><h4>NGOs & AID ORGS</h4><p>Book emergency water supplies for affected communities with priority processing for humanitarian organizations.</p><button class="card-link" onclick="openAuth('register','consumer')">Register as NGO →</button></div>
+      <div class="card-box"><div class="card-icon">👥</div><h4>COMMUNITIES</h4><p>Individual families and communities can book potable water for drinking, sanitation, or agricultural use.</p><button class="card-link" onclick="openAuth('register','consumer')">Register as Community →</button></div>
     </div>
   </div>
-
-  <!-- SUPPLIER CTA -->
   <div class="sup-cta-sec" id="suppliers">
     <div class="sup-cta-inner">
       <div class="sec-tag">Water Suppliers</div>
@@ -481,20 +495,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
         <div>
           <h3>JOIN AS A VERIFIED SUPPLIER</h3>
           <p>Water companies, tanker operators, treatment plants and distributors — list your capacity and receive booking requests from NGOs, governments and communities in your region.</p>
-          <div class="sup-perks">
-            <span>✅ Free to list</span>
-            <span>✅ Receive booking requests</span>
-            <span>✅ Expand your customer base</span>
-            <span>✅ Verified supplier badge</span>
-            <span>✅ Earn 85% of order value</span>
-          </div>
+          <div class="sup-perks"><span>✅ Free to list</span><span>✅ Receive booking requests</span><span>✅ Expand your customer base</span><span>✅ Verified supplier badge</span><span>✅ Earn 85% of order value</span></div>
         </div>
         <button class="btn-hp" onclick="openAuth('register','supplier')">APPLY AS SUPPLIER →</button>
       </div>
     </div>
   </div>
-
-  <!-- ABOUT -->
   <div class="about-sec" id="about">
     <div class="about-inner">
       <div>
@@ -512,8 +518,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       </div>
     </div>
   </div>
-
-  <!-- CONTACT -->
   <div class="contact-sec" id="contact">
     <div class="contact-inner">
       <div class="sec-tag">Get In Touch</div>
@@ -527,15 +531,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
         </div>
         <div class="contact-form">
           <h3>SEND US A MESSAGE</h3>
-          <input class="finp" id="c-name"  type="text"  placeholder="Your Name">
+          <input class="finp" id="c-name" type="text" placeholder="Your Name">
           <input class="finp" id="c-email" type="email" placeholder="Your Email">
-          <select class="finp" id="c-subj">
-            <option>I want to book water</option>
-            <option>I want to become a supplier</option>
-            <option>Partnership inquiry</option>
-            <option>Technical support</option>
-            <option>General question</option>
-          </select>
+          <select class="finp" id="c-subj"><option>I want to book water</option><option>I want to become a supplier</option><option>Partnership inquiry</option><option>Technical support</option><option>General question</option></select>
           <textarea class="finp" id="c-msg" placeholder="Your message..."></textarea>
           <div class="c-result" id="c-result"></div>
           <button class="cbtn" onclick="sendContact()">SEND MESSAGE →</button>
@@ -543,31 +541,20 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       </div>
     </div>
   </div>
-
-  <!-- FOOTER -->
   <div class="footer">
     <div class="footer-grid">
       <div class="footer-brand">
         <div class="logo"><div class="lm" style="width:22px;height:22px"></div>AQUALINK</div>
         <p>A global platform for equitable water distribution. Every community deserves access to clean, safe water.</p>
       </div>
-      <div class="footer-col">
-        <h6>Platform</h6>
-        <a onclick="openAuth('login')">Login</a>
-        <a onclick="openAuth('register','consumer')">Book Water</a>
-        <a onclick="openAuth('register','supplier')">Become Supplier</a>
-      </div>
-      <div class="footer-col">
-        <h6>Company</h6>
-        <a href="#about">About Us</a>
-        <a href="#contact">Contact</a>
-        <a href="#who">Who We Serve</a>
-      </div>
+      <div class="footer-col"><h6>Platform</h6><a onclick="openAuth('login')">Login</a><a onclick="openAuth('register','consumer')">Book Water</a><a onclick="openAuth('register','supplier')">Become Supplier</a></div>
+      <div class="footer-col"><h6>Company</h6><a href="#about">About Us</a><a href="#contact">Contact</a><a href="#who">Who We Serve</a></div>
       <div class="footer-col">
         <h6>Legal</h6>
-        <a onclick="showLegal('privacy')">Privacy Policy</a>
-        <a onclick="showLegal('terms')">Terms of Service</a>
-        <a onclick="showLegal('refund')">Refund Policy</a>
+        <a href="/privacy" target="_blank">Privacy Policy</a>
+        <a href="/terms" target="_blank">Terms of Service</a>
+        <a href="/refund" target="_blank">Refund Policy</a>
+        <a href="/shipping" target="_blank">Shipping Policy</a>
       </div>
     </div>
     <div class="footer-bottom">
@@ -577,53 +564,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   </div>
 </div>
 
-<!-- ════════════════════════════
-     LEGAL MODALS
-════════════════════════════ -->
-<div class="legal-overlay" id="legal-privacy">
-  <div class="legal-box">
-    <button class="legal-close" onclick="hideLegal('privacy')">✕</button>
-    <h2>PRIVACY POLICY</h2>
-    <p class="date">Last updated: May 2026</p>
-    <div class="legal-sec"><h4>1. Information We Collect</h4><p>We collect your name, email, organization, country, and payment details when you register. We also collect booking and interaction data.</p></div>
-    <div class="legal-sec"><h4>2. How We Use Your Information</h4><p>To process bookings and payments, send confirmations and updates, match you with suppliers, and improve our services.</p></div>
-    <div class="legal-sec"><h4>3. Payment Information</h4><p>Payments are processed securely through Paystack. AquaLink does not store full card details. All payment data is encrypted per PCI DSS standards.</p></div>
-    <div class="legal-sec"><h4>4. Data Sharing</h4><p>We do not sell your data. We share information only with assigned suppliers, payment processors, and when required by law.</p></div>
-    <div class="legal-sec"><h4>5. Your Rights</h4><p>You may access, correct, or delete your data at any time by contacting aqualink79@gmail.com.</p></div>
-    <div class="legal-sec"><h4>6. Contact</h4><p>For privacy questions: aqualink79@gmail.com. We respond within 48 hours.</p></div>
-  </div>
-</div>
-
-<div class="legal-overlay" id="legal-terms">
-  <div class="legal-box">
-    <button class="legal-close" onclick="hideLegal('terms')">✕</button>
-    <h2>TERMS OF SERVICE</h2>
-    <p class="date">Last updated: May 2026</p>
-    <div class="legal-sec"><h4>1. Acceptance</h4><p>By using AquaLink, you agree to these Terms. If you disagree, please do not use the platform.</p></div>
-    <div class="legal-sec"><h4>2. Platform Description</h4><p>AquaLink coordinates water distribution between suppliers and consumers. We facilitate bookings and payments but delivery is the supplier's responsibility.</p></div>
-    <div class="legal-sec"><h4>3. User Responsibilities</h4><p>Provide accurate information, ensure delivery location is accessible, and pay for bookings in full before dispatch.</p></div>
-    <div class="legal-sec"><h4>4. Supplier Responsibilities</h4><p>Deliver water as specified. Maintain quality standards. Failure may result in removal from the platform.</p></div>
-    <div class="legal-sec"><h4>5. Payments</h4><p>All payments via Paystack. AquaLink charges a 15% platform fee. Suppliers receive 85% within 48 hours of confirmed delivery.</p></div>
-    <div class="legal-sec"><h4>6. Cancellations</h4><p>Free cancellation before supplier assignment. After assignment, a fee may apply. Emergency bookings cannot be cancelled once dispatched.</p></div>
-    <div class="legal-sec"><h4>7. Contact</h4><p>Questions: aqualink79@gmail.com</p></div>
-  </div>
-</div>
-
-<div class="legal-overlay" id="legal-refund">
-  <div class="legal-box">
-    <button class="legal-close" onclick="hideLegal('refund')">✕</button>
-    <h2>REFUND POLICY</h2>
-    <p class="date">Last updated: May 2026</p>
-    <div class="legal-sec"><h4>Full Refund</h4><p>You receive a full refund if: booking is cancelled before supplier assignment, no supplier is available for your location, or delivery is not completed within 48 hours of the agreed date for emergency orders.</p></div>
-    <div class="legal-sec"><h4>Partial Refund</h4><p>A partial refund may be issued if volume delivered is less than booked, or water quality does not meet agreed standards.</p></div>
-    <div class="legal-sec"><h4>No Refund</h4><p>No refund if delivery was completed as specified, you were unavailable to receive delivery, or incorrect delivery information was provided.</p></div>
-    <div class="legal-sec"><h4>How to Request</h4><p>Email aqualink79@gmail.com with your Booking ID and reason. Refunds processed within 5-7 business days.</p></div>
-  </div>
-</div>
-
-<!-- ════════════════════════════
-     AUTH MODAL
-════════════════════════════ -->
 <div class="overlay" id="auth-overlay" onclick="closeOverlay(event)">
   <div class="mbox">
     <button class="mclose" onclick="closeAuth()">✕</button>
@@ -633,8 +573,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     </div>
     <div id="merr" class="merr"></div>
     <div id="mok"  class="mok"></div>
-
-    <!-- LOGIN -->
     <div id="auth-login">
       <div class="mh2">WELCOME BACK</div>
       <p class="msub">Sign in to your AquaLink account</p>
@@ -645,20 +583,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <button class="mbtn" id="l-btn" onclick="doLogin()">LOGIN →</button>
       <p class="mhint">Demo: admin@aqualink.org / admin123</p>
     </div>
-
-    <!-- REGISTER -->
     <div id="auth-register" style="display:none">
       <div class="mh2">JOIN AQUALINK</div>
       <p class="msub">Create your free account</p>
       <div class="type-sel">
-        <div class="type-card sel" id="tc-consumer" onclick="selType('consumer')">
-          <div class="tico">💧</div><h5>BOOK WATER</h5>
-          <p>I need water for my community or organization</p>
-        </div>
-        <div class="type-card" id="tc-supplier" onclick="selType('supplier')">
-          <div class="tico">🚚</div><h5>SUPPLY WATER</h5>
-          <p>I am a water company wanting to list my services</p>
-        </div>
+        <div class="type-card sel" id="tc-consumer" onclick="selType('consumer')"><div class="tico">💧</div><h5>BOOK WATER</h5><p>I need water for my community or organization</p></div>
+        <div class="type-card" id="tc-supplier" onclick="selType('supplier')"><div class="tico">🚚</div><h5>SUPPLY WATER</h5><p>I am a water company wanting to list my services</p></div>
       </div>
       <div class="m2col">
         <div><label class="mlabel">Full Name *</label><input class="minp" id="r-name" type="text" placeholder="Your name"></div>
@@ -683,9 +613,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
   </div>
 </div>
 
-<!-- ════════════════════════════
-     MAIN APP
-════════════════════════════ -->
 <div id="app">
   <div class="topbar">
     <div class="tlogo" onclick="goLanding()"><div class="lm" style="width:22px;height:22px"></div>AQUALINK</div>
@@ -696,8 +623,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <button class="tlout" onclick="doLogout()">Logout</button>
     </div>
   </div>
-
-  <!-- ADMIN: OVERVIEW -->
   <div class="page" id="pg-admin">
     <div class="ptitle">Admin Control Center</div>
     <p class="psub">Full platform overview — you control everything from here.</p>
@@ -735,11 +660,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       </div>
     </div>
   </div>
-
-  <!-- ADMIN: ALL BOOKINGS -->
   <div class="page" id="pg-admin-bookings">
-    <div class="ptitle">All Bookings</div>
-    <p class="psub">Every water booking across the entire platform.</p>
+    <div class="ptitle">All Bookings</div><p class="psub">Every water booking across the entire platform.</p>
     <div class="frow">
       <input type="text" id="ab-search" placeholder="Search..." oninput="loadAdminBookings()" style="flex:1;min-width:140px">
       <select id="ab-status" onchange="loadAdminBookings()"><option value="all">All Statuses</option><option value="pending">Pending</option><option value="active">Active</option><option value="transit">In Transit</option><option value="complete">Complete</option></select>
@@ -750,11 +672,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <tbody id="ab-rows"></tbody>
     </table></div><div id="ab-empty" class="empty" style="display:none">No bookings found.</div></div>
   </div>
-
-  <!-- ADMIN: SUPPLIERS -->
   <div class="page" id="pg-admin-suppliers">
-    <div class="ptitle">Supplier Management</div>
-    <p class="psub">Review and approve water supplier applications.</p>
+    <div class="ptitle">Supplier Management</div><p class="psub">Review and approve water supplier applications.</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
       <div class="dcard"><div class="dcard-label">Pending Approval</div><div class="dcard-val" id="sup-pend-count" style="color:var(--gold)">-</div></div>
       <div class="dcard"><div class="dcard-label">Verified Suppliers</div><div class="dcard-val" id="sup-ver-count" style="color:var(--green)">-</div></div>
@@ -764,21 +683,15 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <tbody id="sup-rows"></tbody>
     </table></div><div id="sup-empty" class="empty" style="display:none">No suppliers yet.</div></div>
   </div>
-
-  <!-- ADMIN: USERS -->
   <div class="page" id="pg-admin-users">
-    <div class="ptitle">All Users</div>
-    <p class="psub">Every registered account on AquaLink.</p>
+    <div class="ptitle">All Users</div><p class="psub">Every registered account on AquaLink.</p>
     <div class="panel" style="padding:0;overflow:hidden"><div class="tscroll"><table>
       <thead><tr><th>Name</th><th>Email</th><th>Type</th><th>Organization</th><th>Country</th><th>Joined</th></tr></thead>
       <tbody id="admin-users-rows"></tbody>
     </table></div></div>
   </div>
-
-  <!-- ADMIN: REVENUE -->
   <div class="page" id="pg-admin-revenue">
-    <div class="ptitle">Revenue Report</div>
-    <p class="psub">All payments collected through AquaLink.</p>
+    <div class="ptitle">Revenue Report</div><p class="psub">All payments collected through AquaLink.</p>
     <div class="dcards">
       <div class="dcard"><div class="dcard-label">Total Collected</div><div class="dcard-val" id="rev-total">-</div><div class="dcard-tag">NGN</div></div>
       <div class="dcard"><div class="dcard-label">Your Commission (15%)</div><div class="dcard-val" id="rev-comm">-</div><div class="dcard-tag">NGN</div></div>
@@ -790,11 +703,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <tbody id="rev-rows"></tbody>
     </table></div><div id="rev-empty" class="empty" style="display:none">No payments yet.</div></div>
   </div>
-
-  <!-- CONSUMER: DASHBOARD -->
   <div class="page" id="pg-dashboard">
-    <div class="ptitle" id="dash-title">Dashboard</div>
-    <p class="psub" id="dash-sub">Welcome! Book clean water for your community.</p>
+    <div class="ptitle" id="dash-title">Dashboard</div><p class="psub" id="dash-sub">Welcome! Book clean water for your community.</p>
     <div class="dcards">
       <div class="dcard"><div class="dcard-label">My Bookings</div><div class="dcard-val" id="c-total">-</div><div class="dcard-tag">All time</div></div>
       <div class="dcard"><div class="dcard-label">Pending Orders</div><div class="dcard-val" id="c-pending" style="color:var(--gold)">-</div><div class="dcard-tag">Awaiting delivery</div></div>
@@ -823,11 +733,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       </div>
     </div>
   </div>
-
-  <!-- CONSUMER: BOOK WATER -->
   <div class="page" id="pg-book">
-    <div class="ptitle">Book Water Supply</div>
-    <p class="psub">Request clean water delivery to your location.</p>
+    <div class="ptitle">Book Water Supply</div><p class="psub">Request clean water delivery to your location.</p>
     <div id="book-success" class="success-wrap" style="display:none">
       <div class="big">💧</div><h3>BOOKING CONFIRMED!</h3>
       <div class="id-chip" id="s-id">AQL-XXXXX</div>
@@ -855,11 +762,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <div class="btns"><button class="btn btn-p" id="b-btn" onclick="submitBook()">CONFIRM BOOKING →</button><button class="btn btn-g" onclick="resetBook()">Clear</button></div>
     </div>
   </div>
-
-  <!-- CONSUMER: MY BOOKINGS -->
   <div class="page" id="pg-bookings">
-    <div class="ptitle">My Bookings</div>
-    <p class="psub">Track and manage all your water orders.</p>
+    <div class="ptitle">My Bookings</div><p class="psub">Track and manage all your water orders.</p>
     <div class="frow">
       <input type="text" id="f-search" placeholder="Search..." oninput="loadBookings()" style="flex:1;min-width:130px">
       <select id="f-status" onchange="loadBookings()"><option value="all">All Statuses</option><option value="pending">Pending</option><option value="active">Active</option><option value="transit">In Transit</option><option value="complete">Complete</option></select>
@@ -870,24 +774,18 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
       <tbody id="bk-rows"></tbody>
     </table></div><div id="bk-empty" class="empty" style="display:none"><div style="font-size:2rem;margin-bottom:10px">💧</div><span id="bk-msg">No bookings yet.</span></div></div>
   </div>
-
-  <!-- CONSUMER: SUPPLIERS -->
   <div class="page" id="pg-suppliers">
-    <div class="ptitle">Water Suppliers</div>
-    <p class="psub">Verified water suppliers registered on AquaLink.</p>
+    <div class="ptitle">Water Suppliers</div><p class="psub">Verified water suppliers registered on AquaLink.</p>
     <div class="info-banner">ℹ️ When you book water, our team matches you with the nearest verified supplier and coordinates delivery to your location.</div>
     <div class="panel" style="padding:0;overflow:hidden"><div class="tscroll"><table>
       <thead><tr><th>Supplier</th><th>Country</th><th>Water Types</th><th>Coverage Area</th><th>Status</th></tr></thead>
       <tbody id="pub-sup-rows"></tbody>
     </table></div><div id="pub-sup-empty" class="empty" style="display:none"><div style="font-size:2rem;margin-bottom:10px">🚚</div><p>No verified suppliers yet.</p></div></div>
   </div>
-
-  <!-- SUPPLIER DASHBOARD -->
   <div class="page" id="pg-supplier">
-    <div class="ptitle">Supplier Dashboard</div>
-    <p class="psub">Manage your water supply orders here.</p>
+    <div class="ptitle">Supplier Dashboard</div><p class="psub">Manage your water supply orders here.</p>
     <div id="sup-pending-banner" class="info-banner" style="display:none;background:rgba(255,209,102,0.08);border-color:rgba(255,209,102,0.2);color:var(--gold)">⏳ <strong>Your account is pending verification.</strong> Our team will review your application within 24 hours.</div>
-    <div id="sup-verified-banner" class="info-banner" style="display:none">✅ <strong>You are a Verified AquaLink Supplier!</strong> Available orders appear below. Email us to accept any order.</div>
+    <div id="sup-verified-banner" class="info-banner" style="display:none">✅ <strong>You are a Verified AquaLink Supplier!</strong> Available orders appear below.</div>
     <div class="dcards">
       <div class="dcard"><div class="dcard-label">Available Orders</div><div class="dcard-val" id="sup-avail">-</div><div class="dcard-tag">In your region</div></div>
       <div class="dcard"><div class="dcard-label">Completed Deliveries</div><div class="dcard-val" id="sup-done">-</div><div class="dcard-tag">All time</div></div>
@@ -896,475 +794,71 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;heigh
     </div>
     <div class="panel">
       <div class="ptit">Available Paid Bookings</div>
-      <p style="color:var(--muted);font-size:.82rem;margin-bottom:14px">These are paid bookings that need a supplier. Click Accept to email AquaLink and confirm you can fulfill this order.</p>
+      <p style="color:var(--muted);font-size:.82rem;margin-bottom:14px">Paid bookings that need a supplier. Click Accept to email AquaLink and confirm you can fulfill this order.</p>
       <div class="tscroll"><table><thead><tr><th>Booking ID</th><th>Destination</th><th>Type</th><th>Volume</th><th>Priority</th><th>Est. Delivery</th><th>Your Payout</th><th>Action</th></tr></thead><tbody id="sup-order-rows"></tbody></table></div>
-      <div id="sup-order-empty" class="empty" style="display:none"><div style="font-size:2rem;margin-bottom:10px">📦</div><p>No available orders right now. Check back soon!</p></div>
+      <div id="sup-order-empty" class="empty" style="display:none"><div style="font-size:2rem;margin-bottom:10px">📦</div><p>No available orders right now.</p></div>
     </div>
     <div class="panel">
       <div class="ptit">Contact AquaLink</div>
       <a href="mailto:aqualink79@gmail.com" style="display:inline-flex;align-items:center;gap:8px;padding:11px 18px;background:rgba(0,229,255,0.07);border:1px solid rgba(0,229,255,0.2);border-radius:12px;color:var(--glow);text-decoration:none;font-size:.85rem;font-weight:600">📧 aqualink79@gmail.com</a>
     </div>
   </div>
-
-</div><!-- end #app -->
+</div>
 
 <div class="toast" id="toast"><span id="ti">✅</span>&nbsp;<span id="tm"></span></div>
 
 <script>
-var TOKEN = localStorage.getItem('aq_token');
-var ME = null;
-var BOOKING_ID = null;
-var BOOKING_VOL = 0;
-var PAYSTACK_KEY = '';
-var PRICE_KOBO = 10;
-var SEL_TYPE = 'consumer';
-
-// API
-async function api(m,p,d){
-  var o={method:m,headers:{'Content-Type':'application/json'}};
-  if(TOKEN) o.headers['Authorization']='Bearer '+TOKEN;
-  if(d) o.body=JSON.stringify(d);
-  try{var r=await fetch('/api'+p,o);return await r.json();}
-  catch(e){return{error:'Cannot reach server.'};}
-}
-
-// LANDING STATS
-async function loadStats(){
-  var r=await api('GET','/public-stats');
-  if(r.error)return;
-  cnt('ls-bookings',r.totalBookings);
-  cnt('ls-users',r.totalUsers);
-  var l=r.totalLitres;
-  document.getElementById('ls-litres').textContent=l>=1e6?(l/1e6).toFixed(1)+'M':l>=1000?(l/1000).toFixed(0)+'K':l||'0';
-  cnt('ls-suppliers',r.totalSuppliers);
-}
-function cnt(id,t){
-  var el=document.getElementById(id);if(!el||!t)return;
-  var s=performance.now(),d=1500;
-  (function tick(n){var p=Math.min((n-s)/d,1),v=Math.round(t*(1-Math.pow(1-p,3)));el.textContent=v.toLocaleString();if(p<1)requestAnimationFrame(tick);else el.textContent=t.toLocaleString();})(s);
-}
-
-// AUTH
-function openAuth(tab,type){
-  SEL_TYPE=type||'consumer';
-  switchTab(tab==='login'?'login':'register');
-  if(tab!=='login')selType(SEL_TYPE);
-  clrMsg();
-  document.getElementById('auth-overlay').classList.add('open');
-}
+var TOKEN=localStorage.getItem('aq_token');var ME=null;var BOOKING_ID=null;var BOOKING_VOL=0;var PAYSTACK_KEY='';var PRICE_KOBO=10;var SEL_TYPE='consumer';
+async function api(m,p,d){var o={method:m,headers:{'Content-Type':'application/json'}};if(TOKEN)o.headers['Authorization']='Bearer '+TOKEN;if(d)o.body=JSON.stringify(d);try{var r=await fetch('/api'+p,o);return await r.json();}catch(e){return{error:'Cannot reach server.'};}}
+async function loadStats(){var r=await api('GET','/public-stats');if(r.error)return;cnt('ls-bookings',r.totalBookings);cnt('ls-users',r.totalUsers);var l=r.totalLitres;document.getElementById('ls-litres').textContent=l>=1e6?(l/1e6).toFixed(1)+'M':l>=1000?(l/1000).toFixed(0)+'K':l||'0';cnt('ls-suppliers',r.totalSuppliers);}
+function cnt(id,t){var el=document.getElementById(id);if(!el||!t)return;var s=performance.now(),d=1500;(function tick(n){var p=Math.min((n-s)/d,1),v=Math.round(t*(1-Math.pow(1-p,3)));el.textContent=v.toLocaleString();if(p<1)requestAnimationFrame(tick);else el.textContent=t.toLocaleString();})(s);}
+function openAuth(tab,type){SEL_TYPE=type||'consumer';switchTab(tab==='login'?'login':'register');if(tab!=='login')selType(SEL_TYPE);clrMsg();document.getElementById('auth-overlay').classList.add('open');}
 function closeAuth(){document.getElementById('auth-overlay').classList.remove('open');}
 function closeOverlay(e){if(e.target===document.getElementById('auth-overlay'))closeAuth();}
-function switchTab(tab){
-  document.querySelectorAll('.mtab').forEach(function(t,i){t.classList.toggle('on',(tab==='login'&&i===0)||(tab==='register'&&i===1));});
-  document.getElementById('auth-login').style.display=tab==='login'?'block':'none';
-  document.getElementById('auth-register').style.display=tab==='register'?'block':'none';
-  clrMsg();
-}
+function switchTab(tab){document.querySelectorAll('.mtab').forEach(function(t,i){t.classList.toggle('on',(tab==='login'&&i===0)||(tab==='register'&&i===1));});document.getElementById('auth-login').style.display=tab==='login'?'block':'none';document.getElementById('auth-register').style.display=tab==='register'?'block':'none';clrMsg();}
 function clrMsg(){document.getElementById('merr').style.display='none';document.getElementById('mok').style.display='none';}
 function showErr(m){var e=document.getElementById('merr');e.textContent=m;e.style.display='block';}
 function showOk(m){var e=document.getElementById('mok');e.textContent=m;e.style.display='block';}
-function selType(t){
-  SEL_TYPE=t;
-  document.getElementById('tc-consumer').classList.toggle('sel',t==='consumer');
-  document.getElementById('tc-supplier').classList.toggle('sel',t==='supplier');
-  document.getElementById('r-sup-extra').style.display=t==='supplier'?'block':'none';
-}
-
-async function doLogin(){
-  clrMsg();
-  var em=document.getElementById('l-email').value.trim(),pw=document.getElementById('l-pass').value;
-  if(!em||!pw){showErr('Please enter your email and password.');return;}
-  var btn=document.getElementById('l-btn');btn.disabled=true;btn.textContent='Logging in...';
-  var r=await api('POST','/login',{email:em,password:pw});
-  btn.disabled=false;btn.textContent='LOGIN →';
-  if(r.error){showErr(r.error);return;}
-  TOKEN=r.token;ME=r.user;localStorage.setItem('aq_token',TOKEN);
-  showOk('Welcome back, '+ME.name+'!');
-  setTimeout(function(){closeAuth();startApp();},700);
-}
-
-async function doRegister(){
-  clrMsg();
-  var name=document.getElementById('r-name').value.trim(),email=document.getElementById('r-email').value.trim(),pass=document.getElementById('r-pass').value,country=document.getElementById('r-country').value.trim(),org=document.getElementById('r-org').value.trim();
-  if(!name||!email||!pass||!country){showErr('Name, email, password and country are required.');return;}
-  if(pass.length<6){showErr('Password must be at least 6 characters.');return;}
-  var sup={};
-  if(SEL_TYPE==='supplier'){sup={waterTypes:document.getElementById('r-water-types').value,capacity:document.getElementById('r-capacity').value,regions:document.getElementById('r-regions').value};}
-  var role=SEL_TYPE==='supplier'?'supplier':SEL_TYPE==='admin'?'admin':'user';
-  var btn=document.getElementById('r-btn');btn.disabled=true;btn.textContent='Creating...';
-  var r=await api('POST','/register',{name:name,email:email,password:pass,country:country,organization:org,role:role,userType:SEL_TYPE,supplierData:sup});
-  btn.disabled=false;btn.textContent='CREATE ACCOUNT →';
-  if(r.error){showErr(r.error);return;}
-  TOKEN=r.token;ME=r.user;localStorage.setItem('aq_token',TOKEN);
-  showOk(r.message);
-  setTimeout(function(){closeAuth();startApp();},800);
-}
-
-function doLogout(){
-  TOKEN=null;ME=null;localStorage.removeItem('aq_token');
-  document.getElementById('app').style.display='none';
-  document.getElementById('landing').style.display='block';
-  toast('👋','Logged out!');
-}
-function goLanding(){
-  document.getElementById('app').style.display='none';
-  document.getElementById('landing').style.display='block';
-}
-
-// START APP
-function startApp(){
-  document.getElementById('landing').style.display='none';
-  document.getElementById('app').style.display='block';
-  document.getElementById('tav').textContent=ME.name[0].toUpperCase();
-  document.getElementById('tuname').textContent=ME.name.split(' ')[0];
-  document.getElementById('turole').textContent=ME.userType==='supplier'?'Supplier':ME.role==='admin'?'Admin':'Consumer';
-  document.getElementById('b-date').value=new Date(Date.now()+7*864e5).toISOString().slice(0,10);
-  // Build nav
-  var nav=document.getElementById('tnav');nav.innerHTML='';
-  if(ME.role==='admin'){
-    addNav(nav,'Overview','admin');addNav(nav,'Bookings','admin-bookings');
-    addNav(nav,'Suppliers','admin-suppliers');addNav(nav,'Users','admin-users');addNav(nav,'Revenue','admin-revenue');
-    goPage('admin');
-  } else if(ME.userType==='supplier'){
-    addNav(nav,'My Dashboard','supplier');addNav(nav,'All Suppliers','suppliers');
-    goPage('supplier');
-  } else {
-    addNav(nav,'Dashboard','dashboard');addNav(nav,'Book Water','book');
-    addNav(nav,'My Bookings','bookings');addNav(nav,'Suppliers','suppliers');
-    goPage('dashboard');
-  }
-}
-function addNav(nav,label,pg){
-  var b=document.createElement('button');b.className='nb';b.textContent=label;
-  b.onclick=function(){goPage(pg);};b.id='nb-'+pg;nav.appendChild(b);
-}
-
-// NAVIGATION
-function goPage(pg){
-  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('on');});
-  document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('on');});
-  var pe=document.getElementById('pg-'+pg);if(pe)pe.classList.add('on');
-  var ne=document.getElementById('nb-'+pg);if(ne)ne.classList.add('on');
-  if(pg==='admin')           loadAdminDash();
-  if(pg==='admin-bookings')  loadAdminBookings();
-  if(pg==='admin-suppliers') loadAdminSuppliers();
-  if(pg==='admin-users')     loadAdminUsers();
-  if(pg==='admin-revenue')   loadAdminRevenue();
-  if(pg==='dashboard')       loadConsDash();
-  if(pg==='bookings')        loadBookings();
-  if(pg==='suppliers')       loadPubSuppliers();
-  if(pg==='supplier')        loadSupDash();
-}
-
-// ADMIN DASH
-async function loadAdminDash(){
-  var r=await api('GET','/stats');if(r.error)return;
-  document.getElementById('a-bookings').textContent=r.totalBookings;
-  document.getElementById('a-users').textContent=r.totalUsers;
-  document.getElementById('a-approvals').textContent=r.pendingSuppliers||0;
-  document.getElementById('a-pending').textContent=r.byStatus.pending;
-  document.getElementById('a-active').textContent=r.byStatus.active;
-  document.getElementById('a-transit').textContent=r.byStatus.transit;
-  document.getElementById('a-complete').textContent=r.byStatus.complete;
-  var rev=r.totalRevenue||0;
-  document.getElementById('a-revenue').textContent=rev>=1000?(rev/1000).toFixed(0)+'K':rev;
-  document.getElementById('a-recent').innerHTML=(r.recentBookings||[]).map(function(b){
-    return '<tr><td class=bid>'+b.id+'</td><td>'+b.destination+'</td><td>'+fv(b.volumeLitres)+'</td>'+
-    '<td><span class="badge '+pc(b.priority)+'">'+b.priority+'</span></td>'+
-    '<td><span class="badge '+sc(b.status)+'">'+b.status+'</span></td>'+
-    '<td>'+(b.paid?'<span style="color:var(--green)">✅</span>':'<span style="color:var(--muted)">—</span>')+'</td></tr>';
-  }).join('')||'<tr><td colspan=6 style="text-align:center;color:var(--muted);padding:20px">No bookings yet.</td></tr>';
-  var tot=r.totalBookings||1;
-  document.getElementById('a-status-bars').innerHTML=Object.entries(r.byStatus).map(function(e){
-    return '<div class=bar-item><div class=bar-head><span style="color:var(--ice);text-transform:capitalize">'+e[0]+'</span><span style="color:var(--glow)">'+e[1]+'</span></div><div class=bar-track><div class=bar-fill style="width:'+(e[1]/tot*100)+'%"></div></div></div>';
-  }).join('');
-}
-
-// ADMIN BOOKINGS
-async function loadAdminBookings(){
-  var search=document.getElementById('ab-search')?document.getElementById('ab-search').value:'';
-  var status=document.getElementById('ab-status')?document.getElementById('ab-status').value:'all';
-  var r=await api('GET','/bookings?status='+status+(search?'&search='+encodeURIComponent(search):''));
-  var ur=await api('GET','/users');var users=ur.users||[];
-  var tbody=document.getElementById('ab-rows'),empty=document.getElementById('ab-empty');
-  if(!r.bookings||r.bookings.length===0){tbody.innerHTML='';empty.style.display='block';return;}
-  empty.style.display='none';
-  var rows='';
-  for(var i=0;i<r.bookings.length;i++){
-    var b=r.bookings[i];
-    var cust=users.find(function(u){return u.id===b.userId;});
-    var statusSel='<select class=ssel onchange="updStat(this.dataset.id,this.value)" data-id="'+b.id+'">';
-    statusSel+='<option value=pending'+(b.status==='pending'?' selected':'')+'>Pending</option>';
-    statusSel+='<option value=active'+(b.status==='active'?' selected':'')+'>Active</option>';
-    statusSel+='<option value=transit'+(b.status==='transit'?' selected':'')+'>Transit</option>';
-    statusSel+='<option value=complete'+(b.status==='complete'?' selected':'')+'>Complete</option>';
-    statusSel+='</select>';
-    var paidCell=b.paid?'<span style="color:var(--green);font-weight:600">&#10003; NGN '+(b.amountPaid||0).toLocaleString()+'</span>':'<span style="color:var(--muted)">Unpaid</span>';
-    rows+='<tr>';
-    rows+='<td class=bid>'+b.id+'</td>';
-    rows+='<td style="font-size:.8rem">'+(cust?cust.name:'—')+'</td>';
-    rows+='<td>'+b.destination+'</td>';
-    rows+='<td>'+fv(b.volumeLitres)+'</td>';
-    rows+='<td><span class="badge '+pc(b.priority)+'">'+b.priority+'</span></td>';
-    rows+='<td>'+statusSel+'</td>';
-    rows+='<td>'+paidCell+'</td>';
-    rows+='<td style="color:var(--muted);font-size:.78rem">'+b.createdAt.slice(0,10)+'</td>';
-    rows+='<td><button class=btn-d data-bid="'+b.id+'" onclick="cancelB(this.dataset.bid)">Cancel</button></td>';
-    rows+='</tr>';
-  }
-  tbody.innerHTML=rows;
-}
-
-// ADMIN SUPPLIERS
-async function loadAdminSuppliers(){
-  var r=await api('GET','/suppliers');var sups=r.suppliers||[];
-  var pend=sups.filter(function(s){return s.status!=='verified';});
-  var ver=sups.filter(function(s){return s.status==='verified';});
-  document.getElementById('sup-pend-count').textContent=pend.length;
-  document.getElementById('sup-ver-count').textContent=ver.length;
-  var tbody=document.getElementById('sup-rows'),empty=document.getElementById('sup-empty');
-  if(sups.length===0){tbody.innerHTML='';empty.style.display='block';return;}
-  empty.style.display='none';
-  var rows='';
-  for(var i=0;i<sups.length;i++){
-    var s=sups[i];
-    var isV=s.status==='verified';
-    var statusBadge='<span class="badge '+(isV?'b-active':'b-pending')+'">'+(isV?'Verified':'Pending')+'</span>';
-    var actionCell='';
-    if(isV){
-      actionCell='<button class=btn-d data-sid="'+s.id+'" data-status="rejected" onclick="supAction(this.dataset.sid,this.dataset.status)">Revoke</button>';
-    } else {
-      actionCell='<button class="btn btn-p" style="padding:5px 11px;font-size:.76rem;margin-right:4px" data-sid="'+s.id+'" data-status="verified" onclick="supAction(this.dataset.sid,this.dataset.status)">Approve</button>';
-      actionCell+='<button class=btn-d data-sid="'+s.id+'" data-status="rejected" onclick="supAction(this.dataset.sid,this.dataset.status)">Reject</button>';
-    }
-    rows+='<tr>';
-    rows+='<td style="font-weight:600">'+s.name+'</td>';
-    rows+='<td>'+s.organization+'</td>';
-    rows+='<td>'+s.country+'</td>';
-    rows+='<td style="color:var(--muted)">'+s.waterTypes+'</td>';
-    rows+='<td style="font-size:.8rem;color:var(--muted)">'+s.regions+'</td>';
-    rows+='<td>'+statusBadge+'</td>';
-    rows+='<td>'+actionCell+'</td>';
-    rows+='</tr>';
-  }
-  tbody.innerHTML=rows;
-}
-async function supAction(id,status){
-  if(status==='rejected'&&!confirm('Revoke/reject this supplier?'))return;
-  var r=await api('PUT','/suppliers/'+id+'/status',{status:status});
-  if(r.error){toast('X',r.error);return;}
-  toast('OK',status==='verified'?'Supplier approved! They will receive an email.':'Supplier status updated.');
-  loadAdminSuppliers();
-}
-
-// ADMIN USERS
-async function loadAdminUsers(){
-  var r=await api('GET','/users');if(r.error)return;
-  document.getElementById('admin-users-rows').innerHTML=(r.users||[]).map(function(u){
-    var badge=u.userType==='supplier'?'b-supplier':u.role==='admin'?'b-crit':'b-pending';
-    return '<tr><td style="font-weight:600">'+u.name+'</td><td style="color:var(--muted)">'+u.email+'</td>'+
-    '<td><span class="badge '+badge+'">'+(u.userType||u.role)+'</span></td>'+
-    '<td>'+(u.organization||'—')+'</td><td>'+(u.country||'—')+'</td>'+
-    '<td style="color:var(--muted);font-size:.78rem">'+u.createdAt.slice(0,10)+'</td></tr>';
-  }).join('');
-}
-
-// ADMIN REVENUE
-async function loadAdminRevenue(){
-  var r=await api('GET','/bookings?status=all');
-  var paid=(r.bookings||[]).filter(function(b){return b.paid;});
-  var tot=paid.reduce(function(s,b){return s+(b.amountPaid||0);},0);
-  document.getElementById('rev-total').textContent=tot>=1000?(tot/1000).toFixed(1)+'K':tot;
-  document.getElementById('rev-comm').textContent=Math.round(tot*0.15).toLocaleString();
-  document.getElementById('rev-pay').textContent=Math.round(tot*0.85).toLocaleString();
-  document.getElementById('rev-count').textContent=paid.length;
-  var ur=await api('GET','/users');var users=ur.users||[];
-  var tbody=document.getElementById('rev-rows'),empty=document.getElementById('rev-empty');
-  if(paid.length===0){tbody.innerHTML='';empty.style.display='block';return;}
-  empty.style.display='none';
-  tbody.innerHTML=paid.map(function(b){
-    var cust=users.find(function(u){return u.id===b.userId;});
-    var amt=b.amountPaid||0;
-    return '<tr><td class=bid>'+b.id+'</td><td style="font-size:.8rem">'+(cust?cust.name:'—')+'</td><td>'+b.destination+'</td>'+
-    '<td style="color:var(--green);font-weight:600">'+amt.toLocaleString()+'</td>'+
-    '<td style="color:var(--glow)">'+Math.round(amt*0.15).toLocaleString()+'</td>'+
-    '<td style="color:var(--muted)">'+Math.round(amt*0.85).toLocaleString()+'</td>'+
-    '<td style="color:var(--muted);font-size:.78rem">'+(b.paidAt||b.createdAt).slice(0,10)+'</td></tr>';
-  }).join('');
-}
-
-// CONSUMER DASH
-async function loadConsDash(){
-  var r=await api('GET','/bookings');var bk=r.bookings||[];
-  document.getElementById('c-total').textContent=bk.length;
-  document.getElementById('c-pending').textContent=bk.filter(function(b){return b.status==='pending';}).length;
-  document.getElementById('c-complete').textContent=bk.filter(function(b){return b.status==='complete';}).length;
-  var tl=bk.reduce(function(s,b){return s+b.volumeLitres;},0);
-  document.getElementById('c-litres').textContent=tl>=1e6?(tl/1e6).toFixed(1)+'M':tl>=1000?(tl/1000).toFixed(0)+'K':tl;
-  document.getElementById('c-recent').innerHTML=bk.slice(0,5).map(function(b){
-    return '<tr><td class=bid>'+b.id+'</td><td>'+b.destination+'</td><td>'+fv(b.volumeLitres)+'</td>'+
-    '<td><span class="badge '+sc(b.status)+'">'+b.status+'</span></td>'+
-    '<td>'+(b.paid?'<span style="color:var(--green)">✅</span>':'<span style="color:var(--muted)">—</span>')+'</td></tr>';
-  }).join('')||'<tr><td colspan=5 style="text-align:center;color:var(--muted);padding:20px">No bookings yet.</td></tr>';
-}
-
-// MY BOOKINGS
-async function loadBookings(){
-  var search=document.getElementById('f-search')?document.getElementById('f-search').value:'';
-  var status=document.getElementById('f-status')?document.getElementById('f-status').value:'all';
-  var r=await api('GET','/bookings?status='+status+(search?'&search='+encodeURIComponent(search):''));
-  var tbody=document.getElementById('bk-rows'),empty=document.getElementById('bk-empty');
-  if(!r.bookings||r.bookings.length===0){
-    tbody.innerHTML='';
-    empty.style.display='block';
-    document.getElementById('bk-msg').textContent='No bookings yet. Go to Book Water to place your first order.';
-    return;
-  }
-  empty.style.display='none';
-  var rows='';
-  for(var i=0;i<r.bookings.length;i++){
-    var b=r.bookings[i];
-    var payCell=b.paid
-      ? '<span style="color:var(--green);font-weight:600;font-size:.78rem">Paid</span>'
-      : '<button class="btn btn-p" style="padding:4px 10px;font-size:.74rem" data-bid="'+b.id+'" data-vol="'+b.volumeLitres+'" onclick="payBook(this.dataset.bid,parseInt(this.dataset.vol))">Pay</button>';
-    rows+='<tr>';
-    rows+='<td class=bid>'+b.id+'</td>';
-    rows+='<td>'+b.destination+'</td>';
-    rows+='<td style="color:var(--muted)">'+b.waterType+'</td>';
-    rows+='<td style="font-weight:600">'+fv(b.volumeLitres)+'</td>';
-    rows+='<td><span class="badge '+pc(b.priority)+'">'+b.priority+'</span></td>';
-    rows+='<td><span class="badge '+sc(b.status)+'">'+b.status+'</span></td>';
-    rows+='<td>'+payCell+'</td>';
-    rows+='<td style="color:var(--muted);font-size:.78rem">'+b.createdAt.slice(0,10)+'</td>';
-    rows+='<td><button class=btn-d data-bid="'+b.id+'" onclick="cancelB(this.dataset.bid)">Cancel</button></td>';
-    rows+='</tr>';
-  }
-  tbody.innerHTML=rows;
-}
-
+function selType(t){SEL_TYPE=t;document.getElementById('tc-consumer').classList.toggle('sel',t==='consumer');document.getElementById('tc-supplier').classList.toggle('sel',t==='supplier');document.getElementById('r-sup-extra').style.display=t==='supplier'?'block':'none';}
+async function doLogin(){clrMsg();var em=document.getElementById('l-email').value.trim(),pw=document.getElementById('l-pass').value;if(!em||!pw){showErr('Please enter your email and password.');return;}var btn=document.getElementById('l-btn');btn.disabled=true;btn.textContent='Logging in...';var r=await api('POST','/login',{email:em,password:pw});btn.disabled=false;btn.textContent='LOGIN →';if(r.error){showErr(r.error);return;}TOKEN=r.token;ME=r.user;localStorage.setItem('aq_token',TOKEN);showOk('Welcome back, '+ME.name+'!');setTimeout(function(){closeAuth();startApp();},700);}
+async function doRegister(){clrMsg();var name=document.getElementById('r-name').value.trim(),email=document.getElementById('r-email').value.trim(),pass=document.getElementById('r-pass').value,country=document.getElementById('r-country').value.trim(),org=document.getElementById('r-org').value.trim();if(!name||!email||!pass||!country){showErr('Name, email, password and country are required.');return;}if(pass.length<6){showErr('Password must be at least 6 characters.');return;}var sup={};if(SEL_TYPE==='supplier'){sup={waterTypes:document.getElementById('r-water-types').value,capacity:document.getElementById('r-capacity').value,regions:document.getElementById('r-regions').value};}var role=SEL_TYPE==='supplier'?'supplier':SEL_TYPE==='admin'?'admin':'user';var btn=document.getElementById('r-btn');btn.disabled=true;btn.textContent='Creating...';var r=await api('POST','/register',{name:name,email:email,password:pass,country:country,organization:org,role:role,userType:SEL_TYPE,supplierData:sup});btn.disabled=false;btn.textContent='CREATE ACCOUNT →';if(r.error){showErr(r.error);return;}TOKEN=r.token;ME=r.user;localStorage.setItem('aq_token',TOKEN);showOk(r.message);setTimeout(function(){closeAuth();startApp();},800);}
+function doLogout(){TOKEN=null;ME=null;localStorage.removeItem('aq_token');document.getElementById('app').style.display='none';document.getElementById('landing').style.display='block';toast('👋','Logged out!');}
+function goLanding(){document.getElementById('app').style.display='none';document.getElementById('landing').style.display='block';}
+function startApp(){document.getElementById('landing').style.display='none';document.getElementById('app').style.display='block';document.getElementById('tav').textContent=ME.name[0].toUpperCase();document.getElementById('tuname').textContent=ME.name.split(' ')[0];document.getElementById('turole').textContent=ME.userType==='supplier'?'Supplier':ME.role==='admin'?'Admin':'Consumer';document.getElementById('b-date').value=new Date(Date.now()+7*864e5).toISOString().slice(0,10);var nav=document.getElementById('tnav');nav.innerHTML='';if(ME.role==='admin'){addNav(nav,'Overview','admin');addNav(nav,'Bookings','admin-bookings');addNav(nav,'Suppliers','admin-suppliers');addNav(nav,'Users','admin-users');addNav(nav,'Revenue','admin-revenue');goPage('admin');}else if(ME.userType==='supplier'){addNav(nav,'My Dashboard','supplier');addNav(nav,'All Suppliers','suppliers');goPage('supplier');}else{addNav(nav,'Dashboard','dashboard');addNav(nav,'Book Water','book');addNav(nav,'My Bookings','bookings');addNav(nav,'Suppliers','suppliers');goPage('dashboard');}}
+function addNav(nav,label,pg){var b=document.createElement('button');b.className='nb';b.textContent=label;b.onclick=function(){goPage(pg);};b.id='nb-'+pg;nav.appendChild(b);}
+function goPage(pg){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('on');});document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('on');});var pe=document.getElementById('pg-'+pg);if(pe)pe.classList.add('on');var ne=document.getElementById('nb-'+pg);if(ne)ne.classList.add('on');if(pg==='admin')loadAdminDash();if(pg==='admin-bookings')loadAdminBookings();if(pg==='admin-suppliers')loadAdminSuppliers();if(pg==='admin-users')loadAdminUsers();if(pg==='admin-revenue')loadAdminRevenue();if(pg==='dashboard')loadConsDash();if(pg==='bookings')loadBookings();if(pg==='suppliers')loadPubSuppliers();if(pg==='supplier')loadSupDash();}
+async function loadAdminDash(){var r=await api('GET','/stats');if(r.error)return;document.getElementById('a-bookings').textContent=r.totalBookings;document.getElementById('a-users').textContent=r.totalUsers;document.getElementById('a-approvals').textContent=r.pendingSuppliers||0;document.getElementById('a-pending').textContent=r.byStatus.pending;document.getElementById('a-active').textContent=r.byStatus.active;document.getElementById('a-transit').textContent=r.byStatus.transit;document.getElementById('a-complete').textContent=r.byStatus.complete;var rev=r.totalRevenue||0;document.getElementById('a-revenue').textContent=rev>=1000?(rev/1000).toFixed(0)+'K':rev;document.getElementById('a-recent').innerHTML=(r.recentBookings||[]).map(function(b){return'<tr><td class=bid>'+b.id+'</td><td>'+b.destination+'</td><td>'+fv(b.volumeLitres)+'</td><td><span class="badge '+pc(b.priority)+'">'+b.priority+'</span></td><td><span class="badge '+sc(b.status)+'">'+b.status+'</span></td><td>'+(b.paid?'<span style="color:var(--green)">✅</span>':'<span style="color:var(--muted)">—</span>')+'</td></tr>';}).join('')||'<tr><td colspan=6 style="text-align:center;color:var(--muted);padding:20px">No bookings yet.</td></tr>';var tot=r.totalBookings||1;document.getElementById('a-status-bars').innerHTML=Object.entries(r.byStatus).map(function(e){return'<div class=bar-item><div class=bar-head><span style="color:var(--ice);text-transform:capitalize">'+e[0]+'</span><span style="color:var(--glow)">'+e[1]+'</span></div><div class=bar-track><div class=bar-fill style="width:'+(e[1]/tot*100)+'%"></div></div></div>';}).join('');}
+async function loadAdminBookings(){var search=document.getElementById('ab-search')?document.getElementById('ab-search').value:'';var status=document.getElementById('ab-status')?document.getElementById('ab-status').value:'all';var r=await api('GET','/bookings?status='+status+(search?'&search='+encodeURIComponent(search):''));var ur=await api('GET','/users');var users=ur.users||[];var tbody=document.getElementById('ab-rows'),empty=document.getElementById('ab-empty');if(!r.bookings||r.bookings.length===0){tbody.innerHTML='';empty.style.display='block';return;}empty.style.display='none';var rows='';for(var i=0;i<r.bookings.length;i++){var b=r.bookings[i];var cust=users.find(function(u){return u.id===b.userId;});var statusSel='<select class=ssel onchange="updStat(this.dataset.id,this.value)" data-id="'+b.id+'">';statusSel+='<option value=pending'+(b.status==='pending'?' selected':'')+'>Pending</option>';statusSel+='<option value=active'+(b.status==='active'?' selected':'')+'>Active</option>';statusSel+='<option value=transit'+(b.status==='transit'?' selected':'')+'>Transit</option>';statusSel+='<option value=complete'+(b.status==='complete'?' selected':'')+'>Complete</option>';statusSel+='</select>';var paidCell=b.paid?'<span style="color:var(--green);font-weight:600">&#10003; NGN '+(b.amountPaid||0).toLocaleString()+'</span>':'<span style="color:var(--muted)">Unpaid</span>';rows+='<tr><td class=bid>'+b.id+'</td><td style="font-size:.8rem">'+(cust?cust.name:'—')+'</td><td>'+b.destination+'</td><td>'+fv(b.volumeLitres)+'</td><td><span class="badge '+pc(b.priority)+'">'+b.priority+'</span></td><td>'+statusSel+'</td><td>'+paidCell+'</td><td style="color:var(--muted);font-size:.78rem">'+b.createdAt.slice(0,10)+'</td><td><button class=btn-d data-bid="'+b.id+'" onclick="cancelB(this.dataset.bid)">Cancel</button></td></tr>';}tbody.innerHTML=rows;}
+async function loadAdminSuppliers(){var r=await api('GET','/suppliers');var sups=r.suppliers||[];var pend=sups.filter(function(s){return s.status!=='verified';});var ver=sups.filter(function(s){return s.status==='verified';});document.getElementById('sup-pend-count').textContent=pend.length;document.getElementById('sup-ver-count').textContent=ver.length;var tbody=document.getElementById('sup-rows'),empty=document.getElementById('sup-empty');if(sups.length===0){tbody.innerHTML='';empty.style.display='block';return;}empty.style.display='none';var rows='';for(var i=0;i<sups.length;i++){var s=sups[i];var isV=s.status==='verified';var statusBadge='<span class="badge '+(isV?'b-active':'b-pending')+'">'+(isV?'Verified':'Pending')+'</span>';var actionCell='';if(isV){actionCell='<button class=btn-d data-sid="'+s.id+'" data-status="rejected" onclick="supAction(this.dataset.sid,this.dataset.status)">Revoke</button>';}else{actionCell='<button class="btn btn-p" style="padding:5px 11px;font-size:.76rem;margin-right:4px" data-sid="'+s.id+'" data-status="verified" onclick="supAction(this.dataset.sid,this.dataset.status)">Approve</button>';actionCell+='<button class=btn-d data-sid="'+s.id+'" data-status="rejected" onclick="supAction(this.dataset.sid,this.dataset.status)">Reject</button>';}rows+='<tr><td style="font-weight:600">'+s.name+'</td><td>'+s.organization+'</td><td>'+s.country+'</td><td style="color:var(--muted)">'+s.waterTypes+'</td><td style="font-size:.8rem;color:var(--muted)">'+s.regions+'</td><td>'+statusBadge+'</td><td>'+actionCell+'</td></tr>';}tbody.innerHTML=rows;}
+async function supAction(id,status){if(status==='rejected'&&!confirm('Revoke/reject this supplier?'))return;var r=await api('PUT','/suppliers/'+id+'/status',{status:status});if(r.error){toast('X',r.error);return;}toast('OK',status==='verified'?'Supplier approved! They will receive an email.':'Supplier status updated.');loadAdminSuppliers();}
+async function loadAdminUsers(){var r=await api('GET','/users');if(r.error)return;document.getElementById('admin-users-rows').innerHTML=(r.users||[]).map(function(u){var badge=u.userType==='supplier'?'b-supplier':u.role==='admin'?'b-crit':'b-pending';return'<tr><td style="font-weight:600">'+u.name+'</td><td style="color:var(--muted)">'+u.email+'</td><td><span class="badge '+badge+'">'+(u.userType||u.role)+'</span></td><td>'+(u.organization||'—')+'</td><td>'+(u.country||'—')+'</td><td style="color:var(--muted);font-size:.78rem">'+u.createdAt.slice(0,10)+'</td></tr>';}).join('');}
+async function loadAdminRevenue(){var r=await api('GET','/bookings?status=all');var paid=(r.bookings||[]).filter(function(b){return b.paid;});var tot=paid.reduce(function(s,b){return s+(b.amountPaid||0);},0);document.getElementById('rev-total').textContent=tot>=1000?(tot/1000).toFixed(1)+'K':tot;document.getElementById('rev-comm').textContent=Math.round(tot*0.15).toLocaleString();document.getElementById('rev-pay').textContent=Math.round(tot*0.85).toLocaleString();document.getElementById('rev-count').textContent=paid.length;var ur=await api('GET','/users');var users=ur.users||[];var tbody=document.getElementById('rev-rows'),empty=document.getElementById('rev-empty');if(paid.length===0){tbody.innerHTML='';empty.style.display='block';return;}empty.style.display='none';tbody.innerHTML=paid.map(function(b){var cust=users.find(function(u){return u.id===b.userId;});var amt=b.amountPaid||0;return'<tr><td class=bid>'+b.id+'</td><td style="font-size:.8rem">'+(cust?cust.name:'—')+'</td><td>'+b.destination+'</td><td style="color:var(--green);font-weight:600">'+amt.toLocaleString()+'</td><td style="color:var(--glow)">'+Math.round(amt*0.15).toLocaleString()+'</td><td style="color:var(--muted)">'+Math.round(amt*0.85).toLocaleString()+'</td><td style="color:var(--muted);font-size:.78rem">'+(b.paidAt||b.createdAt).slice(0,10)+'</td></tr>';}).join('');}
+async function loadConsDash(){var r=await api('GET','/bookings');var bk=r.bookings||[];document.getElementById('c-total').textContent=bk.length;document.getElementById('c-pending').textContent=bk.filter(function(b){return b.status==='pending';}).length;document.getElementById('c-complete').textContent=bk.filter(function(b){return b.status==='complete';}).length;var tl=bk.reduce(function(s,b){return s+b.volumeLitres;},0);document.getElementById('c-litres').textContent=tl>=1e6?(tl/1e6).toFixed(1)+'M':tl>=1000?(tl/1000).toFixed(0)+'K':tl;document.getElementById('c-recent').innerHTML=bk.slice(0,5).map(function(b){return'<tr><td class=bid>'+b.id+'</td><td>'+b.destination+'</td><td>'+fv(b.volumeLitres)+'</td><td><span class="badge '+sc(b.status)+'">'+b.status+'</span></td><td>'+(b.paid?'<span style="color:var(--green)">✅</span>':'<span style="color:var(--muted)">—</span>')+'</td></tr>';}).join('')||'<tr><td colspan=5 style="text-align:center;color:var(--muted);padding:20px">No bookings yet.</td></tr>';}
+async function loadBookings(){var search=document.getElementById('f-search')?document.getElementById('f-search').value:'';var status=document.getElementById('f-status')?document.getElementById('f-status').value:'all';var r=await api('GET','/bookings?status='+status+(search?'&search='+encodeURIComponent(search):''));var tbody=document.getElementById('bk-rows'),empty=document.getElementById('bk-empty');if(!r.bookings||r.bookings.length===0){tbody.innerHTML='';empty.style.display='block';document.getElementById('bk-msg').textContent='No bookings yet. Go to Book Water to place your first order.';return;}empty.style.display='none';var rows='';for(var i=0;i<r.bookings.length;i++){var b=r.bookings[i];var payCell=b.paid?'<span style="color:var(--green);font-weight:600;font-size:.78rem">Paid</span>':'<button class="btn btn-p" style="padding:4px 10px;font-size:.74rem" data-bid="'+b.id+'" data-vol="'+b.volumeLitres+'" onclick="payBook(this.dataset.bid,parseInt(this.dataset.vol))">Pay</button>';rows+='<tr><td class=bid>'+b.id+'</td><td>'+b.destination+'</td><td style="color:var(--muted)">'+b.waterType+'</td><td style="font-weight:600">'+fv(b.volumeLitres)+'</td><td><span class="badge '+pc(b.priority)+'">'+b.priority+'</span></td><td><span class="badge '+sc(b.status)+'">'+b.status+'</span></td><td>'+payCell+'</td><td style="color:var(--muted);font-size:.78rem">'+b.createdAt.slice(0,10)+'</td><td><button class=btn-d data-bid="'+b.id+'" onclick="cancelB(this.dataset.bid)">Cancel</button></td></tr>';}tbody.innerHTML=rows;}
 async function updStat(id,status){var r=await api('PUT','/bookings/'+id+'/status',{status:status});if(r.error)toast('❌',r.error);else toast('✅','Updated to '+status);}
 async function cancelB(id){if(!confirm('Cancel booking '+id+'?'))return;var r=await api('DELETE','/bookings/'+id);if(r.error){toast('❌',r.error);return;}toast('🗑️','Cancelled.');loadBookings();}
-
-// PUBLIC SUPPLIERS
-async function loadPubSuppliers(){
-  var r=await api('GET','/suppliers');
-  var verified=(r.suppliers||[]).filter(function(s){return s.status==='verified';});
-  var tbody=document.getElementById('pub-sup-rows'),empty=document.getElementById('pub-sup-empty');
-  if(verified.length===0){tbody.innerHTML='';empty.style.display='block';return;}
-  empty.style.display='none';
-  tbody.innerHTML=verified.map(function(s){
-    return '<tr><td style="font-weight:600">'+s.name+'</td><td>'+s.country+'</td><td style="color:var(--muted)">'+s.waterTypes+'</td><td style="font-size:.8rem;color:var(--muted)">'+s.regions+'</td><td><span class="badge b-active">✅ Verified</span></td></tr>';
-  }).join('');
-}
-
-// SUPPLIER DASH
-async function loadSupDash(){
-  var sr=await api('GET','/suppliers');
-  var me=(sr.suppliers||[]).find(function(s){return s.id===ME.id;});
-  var isV=me&&me.status==='verified';
-  document.getElementById('sup-pending-banner').style.display=!isV?'block':'none';
-  document.getElementById('sup-verified-banner').style.display=isV?'block':'none';
-  var r=await api('GET','/bookings?status=all');
-  var all=r.bookings||[];
-  var avail=all.filter(function(b){return b.paid&&b.status!=='complete';});
-  var done=all.filter(function(b){return b.status==='complete';});
-  var earned=done.reduce(function(s,b){return s+((b.amountPaid||0)*0.85);},0);
-  document.getElementById('sup-avail').textContent=avail.length;
-  document.getElementById('sup-done').textContent=done.length;
-  document.getElementById('sup-pp').textContent=avail.filter(function(b){return b.status==='active';}).length;
-  document.getElementById('sup-earned').textContent='NGN '+Math.round(earned).toLocaleString();
-  var tbody=document.getElementById('sup-order-rows'),empty=document.getElementById('sup-order-empty');
-  if(avail.length===0){tbody.innerHTML='';empty.style.display='block';return;}
-  empty.style.display='none';
-  tbody.innerHTML=avail.map(function(b){
-    var payout=Math.round((b.amountPaid||0)*0.85);
-    var priC=b.priority==='Emergency'?'var(--coral)':b.priority==='Urgent'?'var(--gold)':'var(--muted)';
-    return '<tr><td class=bid>'+b.id+'</td><td>'+b.destination+'</td><td style="color:var(--muted)">'+b.waterType+'</td><td style="font-weight:600">'+fv(b.volumeLitres)+'</td>'+
-    '<td style="color:'+priC+';font-weight:600">'+b.priority+'</td><td style="color:var(--muted)">'+b.estimatedDelivery+'</td>'+
-    '<td style="color:var(--green);font-weight:600">NGN '+payout.toLocaleString()+'</td>'+
-    '<td><a href="mailto:aqualink79@gmail.com?subject=Accept Order '+b.id+'&body=I accept booking '+b.id+' for '+b.destination+'" style="display:inline-block;padding:5px 11px;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.2);border-radius:8px;color:var(--glow);text-decoration:none;font-size:.76rem;font-weight:600">Accept</a></td></tr>';
-  }).join('');
-}
-
-// BOOK WATER
+async function loadPubSuppliers(){var r=await api('GET','/suppliers');var verified=(r.suppliers||[]).filter(function(s){return s.status==='verified';});var tbody=document.getElementById('pub-sup-rows'),empty=document.getElementById('pub-sup-empty');if(verified.length===0){tbody.innerHTML='';empty.style.display='block';return;}empty.style.display='none';tbody.innerHTML=verified.map(function(s){return'<tr><td style="font-weight:600">'+s.name+'</td><td>'+s.country+'</td><td style="color:var(--muted)">'+s.waterTypes+'</td><td style="font-size:.8rem;color:var(--muted)">'+s.regions+'</td><td><span class="badge b-active">✅ Verified</span></td></tr>';}).join('');}
+async function loadSupDash(){var sr=await api('GET','/suppliers');var me=(sr.suppliers||[]).find(function(s){return s.id===ME.id;});var isV=me&&me.status==='verified';document.getElementById('sup-pending-banner').style.display=!isV?'block':'none';document.getElementById('sup-verified-banner').style.display=isV?'block':'none';var r=await api('GET','/bookings?status=all');var all=r.bookings||[];var avail=all.filter(function(b){return b.paid&&b.status!=='complete';});var done=all.filter(function(b){return b.status==='complete';});var earned=done.reduce(function(s,b){return s+((b.amountPaid||0)*0.85);},0);document.getElementById('sup-avail').textContent=avail.length;document.getElementById('sup-done').textContent=done.length;document.getElementById('sup-pp').textContent=avail.filter(function(b){return b.status==='active';}).length;document.getElementById('sup-earned').textContent='NGN '+Math.round(earned).toLocaleString();var tbody=document.getElementById('sup-order-rows'),empty=document.getElementById('sup-order-empty');if(avail.length===0){tbody.innerHTML='';empty.style.display='block';return;}empty.style.display='none';tbody.innerHTML=avail.map(function(b){var payout=Math.round((b.amountPaid||0)*0.85);var priC=b.priority==='Emergency'?'var(--coral)':b.priority==='Urgent'?'var(--gold)':'var(--muted)';return'<tr><td class=bid>'+b.id+'</td><td>'+b.destination+'</td><td style="color:var(--muted)">'+b.waterType+'</td><td style="font-weight:600">'+fv(b.volumeLitres)+'</td><td style="color:'+priC+';font-weight:600">'+b.priority+'</td><td style="color:var(--muted)">'+b.estimatedDelivery+'</td><td style="color:var(--green);font-weight:600">NGN '+payout.toLocaleString()+'</td><td><a href="mailto:aqualink79@gmail.com?subject=Accept Order '+b.id+'&body=I accept booking '+b.id+' for '+b.destination+'" style="display:inline-block;padding:5px 11px;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.2);border-radius:8px;color:var(--glow);text-decoration:none;font-size:.76rem;font-weight:600">Accept</a></td></tr>';}).join('');}
 function pp(el){el.closest('.pills').querySelectorAll('.pill').forEach(function(p){p.classList.remove('on');});el.classList.add('on');}
 function uv(v){var n=parseInt(v);document.getElementById('vd').textContent=n>=1e6?(n/1e6).toFixed(1)+'M L':n>=1000?(n/1000).toFixed(0)+'K L':n+' L';}
-async function submitBook(){
-  document.getElementById('b-err').style.display='none';
-  var country=document.getElementById('b-country').value;
-  if(!country){var e=document.getElementById('b-err');e.textContent='Please select a destination country.';e.style.display='block';return;}
-  var pill=document.querySelector('.pill.on'),type=pill?pill.textContent.trim():'Potable';
-  var btn=document.getElementById('b-btn');btn.disabled=true;btn.textContent='Confirming...';
-  var r=await api('POST','/bookings',{destination:country,city:document.getElementById('b-city').value,waterType:type,volumeLitres:parseInt(document.getElementById('vs').value),priority:document.getElementById('b-pri').value,requestorType:document.getElementById('b-rtype').value,requiredBy:document.getElementById('b-date').value,notes:document.getElementById('b-notes').value});
-  btn.disabled=false;btn.textContent='CONFIRM BOOKING →';
-  if(r.error){var e=document.getElementById('b-err');e.textContent=r.error;e.style.display='block';return;}
-  document.getElementById('book-form').style.display='none';
-  document.getElementById('book-success').style.display='block';
-  document.getElementById('s-id').textContent=r.booking.id;
-  document.getElementById('s-msg').textContent=r.message;
-  BOOKING_ID=r.booking.id;BOOKING_VOL=r.booking.volumeLitres;
-  document.getElementById('pay-amount').textContent='NGN '+(r.booking.volumeLitres*PRICE_KOBO/100).toLocaleString();
-  toast('✅','Booking '+r.booking.id+' confirmed!');
-}
+async function submitBook(){document.getElementById('b-err').style.display='none';var country=document.getElementById('b-country').value;if(!country){var e=document.getElementById('b-err');e.textContent='Please select a destination country.';e.style.display='block';return;}var pill=document.querySelector('.pill.on'),type=pill?pill.textContent.trim():'Potable';var btn=document.getElementById('b-btn');btn.disabled=true;btn.textContent='Confirming...';var r=await api('POST','/bookings',{destination:country,city:document.getElementById('b-city').value,waterType:type,volumeLitres:parseInt(document.getElementById('vs').value),priority:document.getElementById('b-pri').value,requestorType:document.getElementById('b-rtype').value,requiredBy:document.getElementById('b-date').value,notes:document.getElementById('b-notes').value});btn.disabled=false;btn.textContent='CONFIRM BOOKING →';if(r.error){var e=document.getElementById('b-err');e.textContent=r.error;e.style.display='block';return;}document.getElementById('book-form').style.display='none';document.getElementById('book-success').style.display='block';document.getElementById('s-id').textContent=r.booking.id;document.getElementById('s-msg').textContent=r.message;BOOKING_ID=r.booking.id;BOOKING_VOL=r.booking.volumeLitres;document.getElementById('pay-amount').textContent='NGN '+(r.booking.volumeLitres*PRICE_KOBO/100).toLocaleString();toast('✅','Booking '+r.booking.id+' confirmed!');}
 function resetBook(){document.getElementById('book-success').style.display='none';document.getElementById('book-form').style.display='block';['b-country','b-city','b-notes'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('vs').value=5000;document.getElementById('vd').textContent='5,000 L';}
-
-// PAYMENT
 async function getKey(){if(PAYSTACK_KEY)return PAYSTACK_KEY;var r=await api('GET','/paystack-key');PAYSTACK_KEY=r.publicKey||'';return PAYSTACK_KEY;}
 async function payNow(){await openPS(BOOKING_ID,BOOKING_VOL);}
 async function payBook(id,vol){BOOKING_ID=id;BOOKING_VOL=vol;await openPS(id,vol);}
-async function openPS(bid,vol){
-  if(!ME){toast('❌','Please log in.');return;}
-  var amount=parseInt(vol)*PRICE_KOBO;if(amount<100)amount=100;
-  var ref='AQL'+Date.now();
-  toast('⏳','Opening payment...');
-  var r=await api('POST','/init-payment',{email:ME.email,amount:amount,reference:ref,bookingId:bid});
-  if(r.error){toast('❌',r.error);return;}
-  var W=520,H=620,L=(screen.width-W)/2,T=(screen.height-H)/2;
-  var popup=window.open(r.url,'pay','width='+W+',height='+H+',left='+L+',top='+T+',scrollbars=yes');
-  if(!popup||popup.closed){window.location.href=r.url;return;}
-  toast('💳','Complete payment in the popup!');
-  var ck=setInterval(function(){
-    if(popup.closed){
-      clearInterval(ck);
-      api('POST','/verify-payment',{reference:r.reference||ref,bookingId:bid}).then(function(vr){
-        if(vr.success){toast('✅','Payment confirmed! Booking is now active.');loadBookings();}
-        else{toast('ℹ️','Payment not completed. Pay anytime from My Bookings.');loadBookings();}
-      });
-    }
-  },1500);
-}
-
-// CONTACT
-async function sendContact(){
-  var name=document.getElementById('c-name').value.trim(),email=document.getElementById('c-email').value.trim(),subj=document.getElementById('c-subj').value,msg=document.getElementById('c-msg').value.trim();
-  var res=document.getElementById('c-result');
-  if(!name||!email||!msg){res.style.display='block';res.style.color='var(--coral)';res.textContent='Please fill in all fields.';return;}
-  res.style.display='block';res.style.color='var(--muted)';res.textContent='Sending...';
-  var r=await api('POST','/contact',{name:name,email:email,subject:subj,message:msg});
-  if(r.success){res.style.color='var(--green)';res.textContent='Message sent! We will reply within 24 hours.';document.getElementById('c-name').value='';document.getElementById('c-email').value='';document.getElementById('c-msg').value='';}
-  else{res.style.color='var(--coral)';res.textContent='Failed. Please email aqualink79@gmail.com directly.';}
-}
-
-// LEGAL
-function showLegal(type){document.getElementById('legal-'+type).style.display='block';document.body.style.overflow='hidden';}
-function hideLegal(type){document.getElementById('legal-'+type).style.display='none';document.body.style.overflow='';}
-
-// UTILS
+async function openPS(bid,vol){if(!ME){toast('❌','Please log in.');return;}var amount=parseInt(vol)*PRICE_KOBO;if(amount<100)amount=100;var ref='AQL'+Date.now();toast('⏳','Opening payment...');var r=await api('POST','/init-payment',{email:ME.email,amount:amount,reference:ref,bookingId:bid});if(r.error){toast('❌',r.error);return;}var W=520,H=620,L=(screen.width-W)/2,T=(screen.height-H)/2;var popup=window.open(r.url,'pay','width='+W+',height='+H+',left='+L+',top='+T+',scrollbars=yes');if(!popup||popup.closed){window.location.href=r.url;return;}toast('💳','Complete payment in the popup!');var ck=setInterval(function(){if(popup.closed){clearInterval(ck);api('POST','/verify-payment',{reference:r.reference||ref,bookingId:bid}).then(function(vr){if(vr.success){toast('✅','Payment confirmed! Booking is now active.');loadBookings();}else{toast('ℹ️','Payment not completed. Pay anytime from My Bookings.');loadBookings();}});}},1500);}
+async function sendContact(){var name=document.getElementById('c-name').value.trim(),email=document.getElementById('c-email').value.trim(),subj=document.getElementById('c-subj').value,msg=document.getElementById('c-msg').value.trim();var res=document.getElementById('c-result');if(!name||!email||!msg){res.style.display='block';res.style.color='var(--coral)';res.textContent='Please fill in all fields.';return;}res.style.display='block';res.style.color='var(--muted)';res.textContent='Sending...';var r=await api('POST','/contact',{name:name,email:email,subject:subj,message:msg});if(r.success){res.style.color='var(--green)';res.textContent='Message sent! We will reply within 24 hours.';document.getElementById('c-name').value='';document.getElementById('c-email').value='';document.getElementById('c-msg').value='';}else{res.style.color='var(--coral)';res.textContent='Failed. Please email aqualink79@gmail.com directly.';}}
 function fv(l){return l>=1e6?(l/1e6).toFixed(1)+'M L':l>=1000?(l/1000).toFixed(0)+'K L':l+' L';}
 function pc(p){return p==='Emergency'?'b-crit':p==='Urgent'?'b-pending':'b-complete';}
 function sc(s){return s==='active'?'b-active':s==='pending'?'b-pending':s==='transit'?'b-transit':'b-complete';}
 function toast(ico,msg){document.getElementById('ti').textContent=ico;document.getElementById('tm').textContent=msg;var t=document.getElementById('toast');t.classList.add('show');setTimeout(function(){t.classList.remove('show');},4000);}
-
-// BOOT
 loadStats();
-(async function(){
-  if(TOKEN){var r=await api('GET','/me');if(!r.error){ME=r.user;startApp();return;}localStorage.removeItem('aq_token');TOKEN=null;}
-})();
+(async function(){if(TOKEN){var r=await api('GET','/me');if(!r.error){ME=r.user;startApp();return;}localStorage.removeItem('aq_token');TOKEN=null;}})();
 </script>
 </body>
 </html>`;
 
-// ── SERVER ────────────────────────────────────────────
+// ── SEED & SERVER ─────────────────────────────────────
 seed();
 
 http.createServer(async function(req, res) {
@@ -1376,11 +870,26 @@ http.createServer(async function(req, res) {
 
   cors(res);
   if (method==='OPTIONS') { res.writeHead(204); res.end(); return; }
+
+  // ── POLICY ROUTES (NEW) ───────────────────────────
+  if (rawUrl==='/privacy' && method==='GET') {
+    return html(res, policyPage('Privacy Policy', PRIVACY_CONTENT));
+  }
+  if (rawUrl==='/terms' && method==='GET') {
+    return html(res, policyPage('Terms of Service', TERMS_CONTENT));
+  }
+  if (rawUrl==='/refund' && method==='GET') {
+    return html(res, policyPage('Refund Policy', REFUND_CONTENT));
+  }
+  if (rawUrl==='/shipping' && method==='GET') {
+    return html(res, policyPage('Shipping & Delivery Policy', SHIPPING_CONTENT));
+  }
+
+  // All other non-API routes serve the main app
   if (!rawUrl.startsWith('/api')) { html(res, APP); return; }
 
   var route = rawUrl.replace('/api','') || '/';
 
-  // ── ROUTES ────────────────────────────────────────
   if (route==='/public-stats' && method==='GET') {
     var db=loadDB();
     return json(res,200,{totalBookings:db.bookings.length,totalUsers:db.users.length,totalLitres:db.bookings.reduce(function(s,b){return s+(b.volumeLitres||0);},0),totalSuppliers:(db.suppliers||[]).filter(function(s){return s.status==='verified';}).length});
@@ -1547,17 +1056,6 @@ http.createServer(async function(req, res) {
     return json(res,400,{error:'Payment verification failed.'});
   }
 
-  // GET /api/reset-db (one time use - delete after use!)
-  if (route==='/reset-db-aqualink2026' && method==='GET') {
-    try {
-      if (fs.existsSync(DBFILE)) fs.unlinkSync(DBFILE);
-      seed();
-      return json(res,200,{success:true,message:'Database reset! Admin: admin@aqualink.org / admin123'});
-    } catch(e) {
-      return json(res,500,{error:e.message});
-    }
-  }
-
   json(res,404,{error:'Not found.'});
 
 }).listen(PORT, function() {
@@ -1567,9 +1065,11 @@ http.createServer(async function(req, res) {
   console.log('   Open:     http://localhost:'+PORT);
   console.log('   Admin:    admin@aqualink.org');
   console.log('   Password: admin123');
+  console.log('========================================');
+  console.log('   Policy pages:');
+  console.log('   /privacy   /terms   /refund   /shipping');
   console.log('========================================\n');
 });
-
 
 
 
